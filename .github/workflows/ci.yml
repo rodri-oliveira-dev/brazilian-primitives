@@ -1,0 +1,310 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test-pack:
+    name: Restore, build, test, coverage e pack
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Configurar .NET 10
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restaurar ferramentas locais
+        run: dotnet tool restore
+
+      - name: Listar ferramentas locais
+        run: dotnet tool list --local
+
+      - name: Restaurar dependências em locked mode
+        run: dotnet restore Template.Library.slnx --locked-mode
+
+      - name: Verificar políticas compartilhadas de build
+        shell: bash
+        run: |
+          project="src/Template.Library/Template.Library.csproj"
+
+          get_property() {
+            dotnet msbuild "$project" -nologo -getProperty:"$1" \
+              | tr -d '\r' \
+              | sed '/^[[:space:]]*$/d' \
+              | tail -n 1
+          }
+
+          assert_equals() {
+            property="$1"
+            expected="$2"
+            actual="$(get_property "$property")"
+
+            if [ "$actual" != "$expected" ]; then
+              echo "$property: esperado '$expected', obtido '$actual'."
+              exit 1
+            fi
+          }
+
+          assert_contains() {
+            property="$1"
+            expected="$2"
+            actual="$(get_property "$property")"
+
+            if [[ "$actual" != *"$expected"* ]]; then
+              echo "$property deveria conter '$expected', obtido '$actual'."
+              exit 1
+            fi
+          }
+
+          assert_equals Nullable enable
+          assert_equals ImplicitUsings enable
+          assert_equals TreatWarningsAsErrors true
+          assert_equals AnalysisLevel 10-recommended
+          assert_equals AnalysisLevelSecurity 10-all
+          assert_equals EnforceCodeStyleInBuild true
+          assert_equals NuGetAudit true
+          assert_equals NuGetAuditMode all
+          assert_equals RestoreEnablePackagePruning true
+          assert_equals RestorePackagesWithLockFile true
+          assert_equals Deterministic true
+          assert_equals ContinuousIntegrationBuild true
+          assert_equals EnablePackageValidation true
+          assert_equals PackageReadmeFile README.md
+          assert_contains WarningsNotAsErrors NU1901
+          assert_contains WarningsNotAsErrors NU1902
+          assert_contains WarningsAsErrors NU1903
+          assert_contains WarningsAsErrors NU1904
+
+      - name: Verificar SDK reproduzivel
+        shell: bash
+        run: |
+          test -s global.json
+          grep -Fq '"version": "10.0.303"' global.json
+          grep -Fq '"rollForward": "latestFeature"' global.json
+          grep -Fq '"allowPrerelease": false' global.json
+          grep -Fq '"runner": "Microsoft.Testing.Platform"' global.json
+
+          sdk_version="$(dotnet --version)"
+          if [[ ! "$sdk_version" =~ ^10\.0\.[0-9]+$ ]]; then
+            echo "SDK .NET 10 esperado pelo global.json, obtido '$sdk_version'."
+            exit 1
+          fi
+
+      - name: Verificar hardening de GitHub Actions
+        shell: bash
+        run: |
+          unpinned="$(grep -R -n -E '^[[:space:]]*uses: [^#[:space:]]+@[A-Za-z0-9._-]+' .github/workflows \
+            | grep -Ev '@[0-9a-f]{40}([[:space:]]|$)' || true)"
+          if [ -n "$unpinned" ]; then
+            echo "Actions sem pin por SHA completo:"
+            echo "$unpinned"
+            exit 1
+          fi
+
+          missing_version_comment="$(grep -R -n -E '^[[:space:]]*uses: [^#[:space:]]+@[0-9a-f]{40}([[:space:]]|$)' .github/workflows \
+            | grep -Ev '# v[0-9]' || true)"
+          if [ -n "$missing_version_comment" ]; then
+            echo "Actions pinadas sem comentario de versao:"
+            echo "$missing_version_comment"
+            exit 1
+          fi
+
+          missing_readonly_checkout="$(
+            for workflow in .github/workflows/*.yml; do
+              awk -v file="$workflow" '
+                function flush() {
+                  if (checkout && !exception && block !~ /persist-credentials:[[:space:]]false/) {
+                    print checkout_line
+                  }
+                }
+
+                /^[[:space:]]*-[[:space:]]name:[[:space:]]*/ {
+                  flush()
+                  block = $0 "\n"
+                  checkout = 0
+                  exception = ($0 ~ /Checkout validated commit/)
+                  next
+                }
+
+                {
+                  block = block $0 "\n"
+                  if ($0 ~ /^[[:space:]]*uses:[[:space:]]actions\/checkout@[0-9a-f]{40}/) {
+                    checkout = 1
+                    checkout_line = file ":" FNR ":" $0
+                  }
+                }
+
+                END {
+                  flush()
+                }
+              ' "$workflow"
+            done
+          )"
+
+          if [ -n "$missing_readonly_checkout" ]; then
+            echo "Checkouts read-only devem declarar persist-credentials:false:"
+            echo "$missing_readonly_checkout"
+            exit 1
+          fi
+
+      - name: Verificar Central Package Management
+        shell: bash
+        run: |
+          project="tests/Template.Library.Tests/Template.Library.Tests.csproj"
+          enabled="$(dotnet msbuild "$project" -nologo -getProperty:ManagePackageVersionsCentrally | tr -d '\r' | sed '/^[[:space:]]*$/d' | tail -n 1)"
+
+          if [ "$enabled" != "true" ]; then
+            echo "ManagePackageVersionsCentrally deveria ser true, obtido '$enabled'."
+            exit 1
+          fi
+
+          if grep -R -n -E '<PackageReference[^>]*Version=' --include='*.csproj' src tests; then
+            echo "PackageReference com Version encontrado em projeto gerenciado por CPM."
+            exit 1
+          fi
+
+          if grep -E -i 'Dapper|EntityFrameworkCore|SqlClient|Testcontainers|AspNetCore|OpenTelemetry|Serilog|BenchmarkDotNet' Directory.Packages.props; then
+            echo "Dependência específica/proibida encontrada na baseline central."
+            exit 1
+          fi
+
+      - name: Listar dependências
+        run: dotnet list Template.Library.slnx package --include-transitive
+
+      - name: Verificar formatação
+        run: dotnet format Template.Library.slnx --verify-no-changes --no-restore
+
+      - name: Compilar
+        run: dotnet build Template.Library.slnx --configuration Release --no-restore
+
+      - name: Executar testes com MTP
+        run: dotnet test Template.Library.slnx --configuration Release --no-build
+
+      - name: Coletar cobertura com Coverlet MTP
+        run: dotnet test Template.Library.slnx --configuration Release --no-build --coverlet --coverlet-output-format cobertura
+
+      - name: Preparar artefato de cobertura
+        shell: bash
+        run: |
+          coverage_file="$(find . -type f -name 'coverage.cobertura*.xml' -not -path './artifacts/*' -print -quit)"
+
+          if [ -z "$coverage_file" ]; then
+            echo "Relatório Cobertura não foi produzido."
+            exit 1
+          fi
+
+          mkdir -p artifacts/coverage
+          cp "$coverage_file" artifacts/coverage/coverage.cobertura.xml
+
+      - name: Empacotar biblioteca
+        run: dotnet pack src/Template.Library/Template.Library.csproj --configuration Release --no-build --output artifacts/packages
+
+      - name: Validar pacote, símbolos e Source Link
+        run: dotnet run --file scripts/verify-package.cs -- artifacts/packages --require-source-link
+
+      - name: Validar consumo do pacote local
+        shell: bash
+        run: |
+          project="src/Template.Library/Template.Library.csproj"
+          version="$(dotnet msbuild "$project" -nologo -getProperty:PackageVersion | tr -d '\r' | sed '/^[[:space:]]*$/d' | tail -n 1)"
+          consumer="$(mktemp -d)"
+
+          dotnet new console --framework net10.0 --output "$consumer"
+          consumer_project="$(find "$consumer" -maxdepth 1 -name '*.csproj' -print -quit)"
+
+          if [ -z "$consumer_project" ]; then
+            echo "Projeto consumidor temporário não foi criado."
+            exit 1
+          fi
+
+          dotnet add "$consumer_project" package Template.Library \
+            --version "$version" \
+            --source "$GITHUB_WORKSPACE/artifacts/packages"
+
+          cat > "$consumer/Program.cs" <<'EOF'
+          using Template.Library;
+
+          _ = new Class1();
+          Console.WriteLine("Template.Library package consumed successfully.");
+          EOF
+
+          dotnet build "$consumer_project" --configuration Release --no-restore
+
+      - name: Verificar baseline de governança
+        shell: bash
+        run: |
+          governance_files=(LICENSE CONTRIBUTING.md CODE_OF_CONDUCT.md CHANGELOG.md)
+
+          for file in "${governance_files[@]}"; do
+            if [ ! -s "$file" ]; then
+              echo "Arquivo de governança ausente ou vazio: $file"
+              exit 1
+            fi
+          done
+
+          grep -Fq 'MIT License' LICENSE
+          grep -Fq 'Copyright (c) 2026 The project contributors' LICENSE
+          grep -Eq '^## \[Unreleased\]$' CHANGELOG.md
+          grep -Fq 'https://keepachangelog.com/en/1.1.0/' CHANGELOG.md
+          grep -Fq 'https://www.contributor-covenant.org/version/2/1/code_of_conduct/' CODE_OF_CONDUCT.md
+
+          if grep -Fq '[INSERT CONTACT METHOD]' CODE_OF_CONDUCT.md; then
+            echo "CODE_OF_CONDUCT.md mantém placeholder de contato não configurado."
+            exit 1
+          fi
+
+      - name: Publicar cobertura
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: coverage
+          path: artifacts/coverage/coverage.cobertura.xml
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Publicar pacotes NuGet
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: nuget-packages
+          path: |
+            artifacts/packages/*.nupkg
+            artifacts/packages/*.snupkg
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Verificar line endings
+        shell: bash
+        run: |
+          unexpected="$({ git ls-files --eol -- '*.cs' '*.csproj' '*.props' '*.targets' '*.sln' '*.slnx' '*.json' '*.xml' '*.yaml' '*.yml' '*.md' '.editorconfig' '.gitignore' '.gitattributes' '*.sh' '*.ps1'; } | grep -E 'w/(crlf|mixed)' || true)"
+          if [ -n "$unexpected" ]; then
+            echo "Arquivos que deveriam usar LF possuem line endings inesperados:"
+            echo "$unexpected"
+            exit 1
+          fi
+
+      - name: Verificar árvore de trabalho limpa
+        shell: bash
+        run: |
+          status="$(git status --porcelain --untracked-files=all)"
+          if [ -n "$status" ]; then
+            echo "Restore, build, testes, cobertura ou packaging deixaram artefatos não ignorados:"
+            echo "$status"
+            exit 1
+          fi

@@ -1,0 +1,276 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (for example v1.0.0 or v1.1.0-beta.1)'
+        required: true
+        type: string
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-and-pack:
+    name: Validate, build, test and pack
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      package-version: ${{ steps.version.outputs.package_version }}
+      release-tag: ${{ steps.version.outputs.release_tag }}
+      should-publish: ${{ steps.version.outputs.should_publish }}
+      is-manual-release: ${{ steps.version.outputs.is_manual_release }}
+      safe-to-publish: ${{ steps.package.outputs.safe_to_publish }}
+      nuget-publishing-enabled: ${{ steps.nuget-publishing.outputs.nuget_publishing_enabled }}
+      nuget-publishing-reason: ${{ steps.nuget-publishing.outputs.nuget_publishing_reason }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Configure .NET 10
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Validate release request
+        id: version
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          MANUAL_VERSION: ${{ inputs.version }}
+          REF_NAME: ${{ github.ref_name }}
+          REF_TYPE: ${{ github.ref_type }}
+          RELEASE_BRANCH: main
+        run: bash scripts/resolve-release-request.sh
+
+      - name: Restore local tools
+        run: dotnet tool restore
+
+      - name: Restore dependencies in locked mode
+        run: dotnet restore Template.Library.slnx --locked-mode
+
+      - name: Validate package identity for publication
+        id: package
+        shell: bash
+        run: |
+          project='src/Template.Library/Template.Library.csproj'
+          package_id="$(dotnet msbuild "$project" -nologo -getProperty:PackageId \
+            | tr -d '\r' \
+            | sed '/^[[:space:]]*$/d' \
+            | tail -n 1)"
+
+          if [ -z "$package_id" ]; then
+            echo '::error::PackageId could not be resolved.'
+            exit 1
+          fi
+
+          placeholder_package_id="Template"".""Library"
+          safe_to_publish=true
+
+          if [ "$package_id" = "$placeholder_package_id" ]; then
+            safe_to_publish=false
+            echo 'Source-template package identity detected. NuGet publication will be skipped.'
+          fi
+
+          echo "package_id=$package_id" >> "$GITHUB_OUTPUT"
+          echo "safe_to_publish=$safe_to_publish" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve NuGet publishing opt-in
+        id: nuget-publishing
+        shell: bash
+        env:
+          SHOULD_PUBLISH: ${{ steps.version.outputs.should_publish }}
+          SAFE_TO_PUBLISH: ${{ steps.package.outputs.safe_to_publish }}
+          NUGET_USER: ${{ vars.NUGET_USER }}
+        run: bash scripts/resolve-nuget-publishing.sh
+
+      - name: Validate resolved MSBuild version
+        shell: bash
+        env:
+          PACKAGE_VERSION: ${{ steps.version.outputs.package_version }}
+        run: |
+          project='src/Template.Library/Template.Library.csproj'
+
+          resolved_version="$(dotnet msbuild "$project" -nologo -getProperty:Version -p:Version="$PACKAGE_VERSION" \
+            | tr -d '\r' | sed '/^[[:space:]]*$/d' | tail -n 1)"
+          resolved_package_version="$(dotnet msbuild "$project" -nologo -getProperty:PackageVersion -p:Version="$PACKAGE_VERSION" \
+            | tr -d '\r' | sed '/^[[:space:]]*$/d' | tail -n 1)"
+
+          if [ "$resolved_version" != "$PACKAGE_VERSION" ]; then
+            echo "::error::Resolved Version '$resolved_version' differs from release version '$PACKAGE_VERSION'."
+            exit 1
+          fi
+
+          if [ "$resolved_package_version" != "$PACKAGE_VERSION" ]; then
+            echo "::error::Resolved PackageVersion '$resolved_package_version' differs from release version '$PACKAGE_VERSION'."
+            exit 1
+          fi
+
+      - name: Build Release
+        env:
+          PACKAGE_VERSION: ${{ steps.version.outputs.package_version }}
+        run: >-
+          dotnet build Template.Library.slnx
+          --configuration Release
+          --no-restore
+          -p:Version="$PACKAGE_VERSION"
+
+      - name: Run tests
+        run: dotnet test Template.Library.slnx --configuration Release --no-build
+
+      - name: Pack release artifacts
+        env:
+          PACKAGE_VERSION: ${{ steps.version.outputs.package_version }}
+        run: >-
+          dotnet pack src/Template.Library/Template.Library.csproj
+          --configuration Release
+          --no-build
+          --output artifacts/packages
+          -p:Version="$PACKAGE_VERSION"
+
+      - name: Validate package, version, assembly metadata, symbols and Source Link
+        env:
+          PACKAGE_VERSION: ${{ steps.version.outputs.package_version }}
+        run: >-
+          dotnet run --file scripts/verify-package.cs -- artifacts/packages
+          --require-source-link
+          --expected-version "$PACKAGE_VERSION"
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: release-packages
+          path: |
+            artifacts/packages/*.nupkg
+            artifacts/packages/*.snupkg
+          if-no-files-found: error
+          retention-days: 7
+
+  ensure-release-tag:
+    name: Ensure release tag
+    needs: build-and-pack
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout validated commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+
+      - name: Create or verify release tag
+        shell: bash
+        env:
+          IS_MANUAL_RELEASE: ${{ needs.build-and-pack.outputs.is-manual-release }}
+          RELEASE_TAG: ${{ needs.build-and-pack.outputs.release-tag }}
+          VALIDATED_SHA: ${{ github.sha }}
+        run: bash scripts/ensure-release-tag.sh
+
+  publish-nuget:
+    name: Publish to NuGet.org
+    needs:
+      - build-and-pack
+      - ensure-release-tag
+    if: needs.build-and-pack.outputs.nuget-publishing-enabled == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Configure .NET 10
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Download release artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: release-packages
+          path: artifacts/packages
+
+      - name: Exchange GitHub OIDC token for temporary NuGet API key
+        id: nuget-login
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2.0
+        with:
+          user: ${{ vars.NUGET_USER }}
+
+      - name: Publish package and symbols
+        env:
+          NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
+        run: >-
+          dotnet nuget push "artifacts/packages/*.nupkg"
+          --source https://api.nuget.org/v3/index.json
+          --api-key "$NUGET_API_KEY"
+          --skip-duplicate
+
+  github-release:
+    name: Create GitHub Release
+    needs:
+      - build-and-pack
+      - ensure-release-tag
+      - publish-nuget
+    if: >-
+      always() &&
+      needs.build-and-pack.result == 'success' &&
+      needs.ensure-release-tag.result == 'success' &&
+      (
+        needs.build-and-pack.outputs.nuget-publishing-enabled != 'true' ||
+        needs.publish-nuget.result == 'success'
+      )
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download package artifacts
+        if: ${{ needs.build-and-pack.outputs.safe-to-publish == 'true' }}
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: release-packages
+          path: artifacts/packages
+
+      - name: Create GitHub Release with package artifacts
+        if: ${{ needs.build-and-pack.outputs.safe-to-publish == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ needs.build-and-pack.outputs.release-tag }}
+        shell: bash
+        run: |
+          release_args=(--verify-tag --generate-notes --title "$RELEASE_TAG")
+          if [[ "$RELEASE_TAG" == *-* ]]; then
+            release_args+=(--prerelease)
+          fi
+
+          gh release create "$RELEASE_TAG" \
+            --repo "$GH_REPO" \
+            artifacts/packages/*.nupkg \
+            artifacts/packages/*.snupkg \
+            "${release_args[@]}"
+
+      - name: Create source-template GitHub Release without package artifacts
+        if: ${{ needs.build-and-pack.outputs.safe-to-publish == 'false' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ needs.build-and-pack.outputs.release-tag }}
+        shell: bash
+        run: |
+          release_args=(--verify-tag --generate-notes --title "$RELEASE_TAG")
+          if [[ "$RELEASE_TAG" == *-* ]]; then
+            release_args+=(--prerelease)
+          fi
+
+          gh release create "$RELEASE_TAG" --repo "$GH_REPO" "${release_args[@]}"
