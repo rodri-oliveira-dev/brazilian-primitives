@@ -57,13 +57,13 @@ jobs:
         run: dotnet tool restore
 
       - name: Restore dependencies in locked mode
-        run: dotnet restore Template.Library.slnx --locked-mode
+        run: dotnet restore Brazilian.Primitives.slnx --locked-mode
 
       - name: Validate package identity for publication
         id: package
         shell: bash
         run: |
-          project='src/Template.Library/Template.Library.csproj'
+          project='src/Brazilian.Primitives/Brazilian.Primitives.csproj'
           package_id="$(dotnet msbuild "$project" -nologo -getProperty:PackageId \
             | tr -d '\r' \
             | sed '/^[[:space:]]*$/d' \
@@ -99,7 +99,7 @@ jobs:
         env:
           PACKAGE_VERSION: ${{ steps.version.outputs.package_version }}
         run: |
-          project='src/Template.Library/Template.Library.csproj'
+          project='src/Brazilian.Primitives/Brazilian.Primitives.csproj'
 
           resolved_version="$(dotnet msbuild "$project" -nologo -getProperty:Version -p:Version="$PACKAGE_VERSION" \
             | tr -d '\r' | sed '/^[[:space:]]*$/d' | tail -n 1)"
@@ -120,19 +120,19 @@ jobs:
         env:
           PACKAGE_VERSION: ${{ steps.version.outputs.package_version }}
         run: >-
-          dotnet build Template.Library.slnx
+          dotnet build Brazilian.Primitives.slnx
           --configuration Release
           --no-restore
           -p:Version="$PACKAGE_VERSION"
 
       - name: Run tests
-        run: dotnet test Template.Library.slnx --configuration Release --no-build
+        run: dotnet test Brazilian.Primitives.slnx --configuration Release --no-build
 
       - name: Pack release artifacts
         env:
           PACKAGE_VERSION: ${{ steps.version.outputs.package_version }}
         run: >-
-          dotnet pack src/Template.Library/Template.Library.csproj
+          dotnet pack src/Brazilian.Primitives/Brazilian.Primitives.csproj
           --configuration Release
           --no-build
           --output artifacts/packages

@@ -1,255 +1,87 @@
-# .NET Library Template
+# Brazilian.Primitives
 
-[English](README.en.md) | **Português**
+Reusable .NET 10 class library with a production-ready baseline for build, tests, dependency management, packaging, security analysis, release automation, and repository governance.
 
-[![Build & Tests](https://github.com/rodri-oliveira-dev/dotnet-library-template/actions/workflows/ci.yml/badge.svg)](https://github.com/rodri-oliveira-dev/dotnet-library-template/actions/workflows/ci.yml)
-[![software_quality_security_issues](https://sonarcloud.io/api/project_badges/measure?project=rodri-oliveira-dev_dotnet-library-template&metric=software_quality_security_issues)](https://sonarcloud.io/summary/new_code?id=rodri-oliveira-dev_dotnet-library-template)
-[![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=rodri-oliveira-dev_dotnet-library-template&metric=coverage)](https://sonarcloud.io/summary/new_code?id=rodri-oliveira-dev_dotnet-library-template)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+## Requirements
 
-Template opinativo e reutilizável para iniciar bibliotecas .NET 10 com uma baseline consistente de build, testes, dependências, empacotamento, CI, segurança, qualidade, versionamento, release e governança.
+- .NET SDK 10
+- Git
 
-O objetivo não é fornecer uma arquitetura de domínio pronta. O template fornece uma **fundação técnica previsível** para que uma nova biblioteca comece com práticas de engenharia já configuradas, sem carregar dependências específicas de um produto.
-
-## Escolha como usar o template
-
-Existem dois fluxos suportados:
-
-| Fluxo | Quando usar | Renomeia `Template.Library` automaticamente? |
-| --- | --- | --- |
-| [`dotnet new`](#opção-recomendada--dotnet-new) | Quando você quer gerar uma nova biblioteca já com identidade própria | Sim |
-| [GitHub Template Repository](#alternativa--github-template-repository) | Quando você quer criar primeiro um repositório no GitHub e inicializá-lo por Actions | Sim, depois do workflow `Initialize repository` |
-
-Para a maioria dos novos projetos, prefira **`dotnet new`**.
-
-## Quick Start
-
-Fluxo recomendado para gerar uma biblioteca localmente:
-
-```bash
-git clone https://github.com/rodri-oliveira-dev/dotnet-library-template.git
-cd dotnet-library-template
-
-dotnet new install .
-dotnet new list rodri-lib
-
-dotnet new rodri-lib -n MyCompany.MyLibrary
-cd MyCompany.MyLibrary
-
-dotnet restore --locked-mode
-dotnet build -c Release
-dotnet test -c Release
-```
-
-Esse caminho executa o template engine do .NET, cria o diretório `MyCompany.MyLibrary/` por causa de `preferNameDirectory` e substitui `Template.Library` nos paths e conteúdos relevantes.
-
-## O que a baseline fornece
-
-### Build e dependências
-
-- .NET 10;
-- solução no formato `.slnx`;
-- nullable reference types e implicit usings;
-- warnings tratados como erros;
-- baseline de analyzers do SDK em `10-recommended`, analyzers de segurança em `10-all` e code style participando do build;
-- build determinístico;
-- SDK reproduzível por `global.json` com roll-forward sustentável dentro do .NET 10;
-- Central Package Management em `Directory.Packages.props`;
-- `packages.lock.json` e restore com `--locked-mode`;
-- NuGet Audit com falha para vulnerabilidades High/Critical.
-
-### Testes e qualidade
-
-- xUnit v3 sobre Microsoft Testing Platform;
-- AwesomeAssertions;
-- NSubstitute;
-- cobertura com Coverlet MTP;
-- `dotnet format` no CI;
-- regras de confiabilidade e performance de baixo ruído aplicadas ao código de produção sem bloquear testes por detalhes internos;
-- SonarQube Cloud opcional;
-- validação do pacote em um consumidor temporário.
-
-### Empacotamento e versionamento
-
-- `.nupkg` e `.snupkg`;
-- documentação XML;
-- README incluído no pacote NuGet;
-- PDB portátil e Source Link;
-- Package Validation nativo do SDK durante `dotnet pack`;
-- Semantic Versioning;
-- versão base centralizada em `Directory.Build.props`;
-- validação da versão do pacote e da metadata do assembly;
-- release manual pelo GitHub Actions ou por push de tag Git;
-- criação da tag manual somente depois de build, testes, pack e validação bem-sucedidos;
-- NuGet.org Trusted Publishing via GitHub OIDC com publicação opt-in por `NUGET_USER`;
-- GitHub Release independente da habilitação do NuGet.
-
-### Segurança e governança
-
-- CodeQL para C#;
-- Dependency Review;
-- Dependabot;
-- licença MIT;
-- `CONTRIBUTING.md`;
-- `CODE_OF_CONDUCT.md`;
-- `SECURITY.md`;
-- `CHANGELOG.md`;
-- workflows com permissões mínimas explícitas, actions pinadas por SHA e checkouts somente-leitura sem persistência de credenciais.
-
-O template é deliberadamente genérico. Ele não inclui ASP.NET Core, banco de dados, ORM, logging específico, Testcontainers de infraestrutura, BenchmarkDotNet, tuning de runtime, Server GC, ReadyToRun ou outras dependências sem um caso de uso comum e comprovado. Compatibilidade com trimming ou Native AOT deve ser habilitada por cada biblioteca somente quando fizer parte do contrato real do pacote.
-
-## Pré-requisitos
-
-- .NET SDK 10;
-- Git.
-
-Confirme o SDK instalado:
+Check the installed SDK with:
 
 ```bash
 dotnet --version
 ```
 
-## Opção recomendada — `dotnet new`
+The repository pins the expected .NET 10 SDK feature band in `global.json` while allowing roll-forward to newer .NET 10 feature bands.
 
-Clone este repositório e instale o template a partir da raiz:
+## Restore
 
-```bash
-git clone https://github.com/rodri-oliveira-dev/dotnet-library-template.git
-cd dotnet-library-template
-
-dotnet new install .
-dotnet new list rodri-lib
-```
-
-Gere uma biblioteca:
+Restore local .NET tools and locked package dependencies from the repository root:
 
 ```bash
-dotnet new rodri-lib -n MyCompany.MyLibrary
-```
-
-Como `preferNameDirectory` está habilitado, o comando cria `MyCompany.MyLibrary/` e substitui a identidade neutra `Template.Library` nos paths e conteúdos relevantes.
-
-Se você quiser controlar explicitamente o diretório de destino, use `-o`/`--output`:
-
-```bash
-dotnet new rodri-lib -n MyCompany.MyLibrary -o ./MyCompany.MyLibrary
-```
-
-O parâmetro `-o` é opcional; ele é útil quando você quer gerar a biblioteca em um caminho diferente do diretório preferido pelo nome.
-
-Valide a saída:
-
-```bash
-cd MyCompany.MyLibrary
 dotnet tool restore
 dotnet restore --locked-mode
-dotnet build --configuration Release --no-restore
-dotnet test --configuration Release --no-build
-dotnet pack src/MyCompany.MyLibrary/MyCompany.MyLibrary.csproj \
-  --configuration Release \
-  --no-build \
-  --output artifacts/packages
 ```
 
-Sem override de release, o pacote usa a versão base `1.0.0`.
+The local tool manifest includes SonarScanner for .NET. Installing/restoring the tool does not enable SonarQube Cloud analysis by itself; the integration remains opt-in through the `SONAR_TOKEN` repository secret.
 
-Quando terminar de testar a instalação local:
+## Build
 
 ```bash
-cd ..
-dotnet new uninstall .
+dotnet build --configuration Release --no-restore
 ```
 
-Detalhes de evolução e validação do template estão em [docs/template-development.md](docs/template-development.md).
+The shared build policies enable nullable reference types, implicit usings, deterministic builds, NuGet auditing, package lock files, warnings as errors, SDK analyzers at `10-recommended`, security analyzers at `10-all`, and code style enforcement during builds.
 
-## Alternativa — GitHub Template Repository
+Production code under `src/**/*.cs` also enables selected reliability/API-usage rules and low-noise performance rules. Test code keeps the shared style baseline without inheriting production-only rules that would make tests noisy.
 
-Na página do repositório, use **Use this template** e escolha **Create a new repository**. Em seguida, inicialize a cópia pelo GitHub Actions:
-
-```text
-Use this template
-→ Create a new repository
-→ Actions
-→ Initialize repository
-→ Run workflow
-→ project_name = MyCompany.MyLibrary
-```
-
-O GitHub **não executa** `.template.config/template.json` ao copiar o repositório. Ele faz somente a cópia inicial. O workflow **Initialize repository** executa depois o template engine real do .NET dentro da cópia, usando `dotnet new rodri-lib -n MyCompany.MyLibrary`, para aplicar `sourceName`, `exclude`, `rename` e `preferNameDirectory` a partir da configuração oficial do template.
-
-Depois de uma inicialização bem-sucedida:
-
-- `Template.Library` é substituído pela identidade informada;
-- arquivos exclusivos de manutenção do template são removidos;
-- `docs/library-readme.md` vira o `README.md` da biblioteca gerada;
-- o próprio workflow `Initialize repository` e seu helper são removidos;
-- o desenvolvimento continua usando os workflows normais da biblioteca gerada.
-
-Execute esse workflow antes de iniciar o desenvolvimento normal no novo repositório. Ele deve rodar na branch padrão e falha se for executado no repositório-fonte `rodri-oliveira-dev/dotnet-library-template`.
-
-### Pré-requisitos e falhas esperadas
-
-- GitHub Actions precisa estar habilitado no novo repositório;
-- configure o Repository Secret `INITIALIZE_REPOSITORY_TOKEN` antes de executar o workflow;
-- esse token deve ser temporário e ter permissão mínima para o repositório de destino: `Contents: write` e `Workflows: write`;
-- remova ou revogue `INITIALIZE_REPOSITORY_TOKEN` depois da inicialização bem-sucedida;
-- rulesets ou branch protection da organização podem bloquear o push feito com `INITIALIZE_REPOSITORY_TOKEN`;
-- se validação, build, testes ou empacotamento falharem, o workflow não deve commitar nem enviar uma inicialização parcial;
-- se o push for bloqueado, ajuste as regras do repositório ou aplique um processo equivalente aprovado sem enfraquecer a segurança automaticamente.
-
-### Checklist pós-inicialização
-
-Antes do primeiro release de uma biblioteca criada pelo GitHub Template:
-
-- personalize a descrição e os metadados do pacote;
-- revise a versão base em `Directory.Build.props`;
-- revise README, licença e metadados públicos;
-- se quiser publicar no NuGet.org, configure Trusted Publishing para `.github/workflows/release.yml` e a Repository Variable `NUGET_USER`;
-- configure `SONAR_TOKEN` se quiser habilitar SonarQube Cloud;
-- configure ruleset ou branch protection para `main`;
-- revise as permissões padrão do GitHub Actions;
-- habilite e valide os recursos de segurança apropriados do GitHub;
-- configure environments ou proteções adicionais quando houver publicação/deploy protegido.
-
-> Configurações administrativas não são copiadas por um GitHub Template Repository. Isso inclui secrets, variables, environments, rulesets, branch protection, Trusted Publishing policies e outras configurações do repositório.
-
-A baseline administrativa recomendada está documentada em [docs/repository-administration.md](docs/repository-administration.md).
-
-## Validar o repositório-template
-
-A partir da raiz deste repositório:
+## Test
 
 ```bash
-dotnet --version
-dotnet tool restore
-dotnet restore --locked-mode
-dotnet format --verify-no-changes --no-restore
-dotnet build --configuration Release --no-restore
 dotnet test --configuration Release --no-build
+```
+
+Tests use xUnit v3 on Microsoft Testing Platform, AwesomeAssertions, and NSubstitute.
+
+## Coverage
+
+```bash
 dotnet test --configuration Release --no-build --coverlet --coverlet-output-format cobertura
-dotnet pack src/Template.Library/Template.Library.csproj \
+```
+
+## Pack
+
+```bash
+dotnet pack src/Brazilian.Primitives/Brazilian.Primitives.csproj \
   --configuration Release \
   --no-build \
   --output artifacts/packages
-dotnet run --file scripts/verify-package.cs -- artifacts/packages \
-  --require-source-link \
-  --expected-version 1.0.0
 ```
 
-Os workflows de manutenção também validam geração end-to-end, contrato de versionamento, integração opcional com SonarQube Cloud e o fluxo de release/publicação.
+The project generates a `.nupkg` plus a `.snupkg` containing portable PDB symbols. XML documentation, the project README, Source Link metadata, and native SDK Package Validation are included in the packaging baseline.
 
-## Versionamento e release
+Before publishing a real package, replace the placeholder package description in `src/Brazilian.Primitives/Brazilian.Primitives.csproj` with a description of the library.
 
-A versão base de desenvolvimento é declarada uma única vez em `Directory.Build.props`:
+## Validate the package
+
+```bash
+dotnet run --file scripts/verify-package.cs -- artifacts/packages
+```
+
+The verifier checks package identity, metadata, XML documentation, symbols, repository metadata, and Source Link information. When `--expected-version` is supplied, it also validates the NuGet version plus `AssemblyVersion`, `FileVersion`, and `InformationalVersion` contained in the packaged assembly.
+
+## Versioning
+
+The library uses Semantic Versioning and has a single version source for normal local/development builds:
 
 ```xml
 <VersionPrefix>1.0.0</VersionPrefix>
 ```
 
-Os projetos não devem duplicar `Version`, `VersionPrefix` ou `PackageVersion`.
+That property lives in `Directory.Build.props`. Do not duplicate `<Version>`, `<VersionPrefix>`, or `<PackageVersion>` across individual `.csproj` files.
 
-Em releases, a **tag Git é a fonte de verdade**:
+With no release override, build and pack resolve version **1.0.0**. For a release, the Git tag becomes the source of truth and `.github/workflows/release.yml` passes the tag-derived value through the single MSBuild `Version` property:
 
 ```text
 v1.0.0          -> Version 1.0.0
@@ -257,103 +89,55 @@ v1.2.3          -> Version 1.2.3
 v1.3.0-beta.1   -> Version 1.3.0-beta.1
 ```
 
-`.github/workflows/release.yml` usa `Version` como único override de release, executa restore/build/test/pack, valida o pacote, garante a tag e só então segue para publicação externa e GitHub Release.
+The .NET SDK then derives `PackageVersion` and assembly metadata from that value. Under the baseline conventions:
 
-### Release manual pelo GitHub Actions
+```text
+1.2.3          -> AssemblyVersion/FileVersion 1.2.3.0
+1.3.0-beta.1   -> AssemblyVersion/FileVersion 1.3.0.0
+```
 
-O fluxo recomendado para uma release manual é:
+`InformationalVersion` keeps the full SemVer value, including prerelease identifiers, and may include deterministic source revision metadata after a `+` suffix.
 
-1. abra a aba **Actions** do repositório;
-2. selecione o workflow **Release**;
-3. clique em **Run workflow**;
-4. selecione a branch **main**;
-5. informe **Release version**, por exemplo `v1.2.0` ou `v1.3.0-beta.1`;
-6. execute o workflow.
-
-O workflow rejeita releases manuais fora de `main` e falha antecipadamente se a tag informada já existir. Depois disso ele executa build, testes, pack e `verify-package`. **A tag só é criada depois que todas essas validações passam** e aponta exatamente para o `github.sha` validado naquela execução.
-
-Depois da criação da tag, o mesmo workflow continua para NuGet quando habilitado e para o GitHub Release. A tag criada com o `GITHUB_TOKEN` não depende de uma segunda execução do workflow.
-
-O fluxo legado por push de uma tag válida continua suportado:
+A release never requires editing the same version in multiple files. The workflow validates the resolved MSBuild version, builds, tests, packs, and runs:
 
 ```bash
-git tag v1.2.0
-git push origin v1.2.0
+dotnet run --file scripts/verify-package.cs -- artifacts/packages \
+  --require-source-link \
+  --expected-version <release-version>
 ```
 
-Nesse caso, o workflow verifica que a tag recebida resolve para o mesmo SHA que está sendo validado antes de publicar qualquer coisa.
+Any mismatch fails before the release tag is created or any external publication occurs.
 
-### NuGet.org Trusted Publishing
+Before cutting a stable release, move relevant entries from the `Unreleased` section of `CHANGELOG.md` into the corresponding release section when applicable. The changelog is intentionally not rewritten automatically by the workflow.
 
-A publicação no NuGet.org é explicitamente **opt-in**. `NUGET_USER` é uma **Repository Variable**, não um secret, e funciona como flag de habilitação da publicação.
+## Continuous integration
 
-Para configurá-la quando ainda não existir:
+`.github/workflows/ci.yml` runs on pull requests and pushes to `main`. It restores tools and locked dependencies, verifies formatting, builds in Release, runs tests, collects Cobertura coverage, packs and validates the NuGet package, and publishes two downloadable workflow artifacts:
 
-1. abra o repositório no GitHub;
-2. acesse **Settings**;
-3. abra **Secrets and variables** → **Actions**;
-4. selecione a aba **Variables**;
-5. clique em **New repository variable**;
-6. em **Name**, informe `NUGET_USER`;
-7. em **Value**, informe o profile name/username do nuget.org usado pela policy de Trusted Publishing;
-8. salve a variável.
+- `coverage` with `coverage.cobertura.xml`;
+- `nuget-packages` with `.nupkg` and `.snupkg` files.
 
-Além disso, no nuget.org crie uma **Trusted Publishing policy** para o repositório apontando para:
+The workflow uses read-only repository permissions, pins third-party actions by SHA with version comments, avoids persisting checkout credentials for read-only jobs, and cancels superseded runs for the same Git ref.
 
-```text
-.github/workflows/release.yml
-```
+## Security analysis
 
-O workflow centraliza a decisão em `nuget-publishing-enabled`. A publicação NuGet só é habilitada quando:
+`.github/workflows/codeql.yml` runs GitHub CodeQL for C# on pull requests to `main`, pushes to `main`, and a weekly schedule. It uses CodeQL Action v4 with a manual build so the analysis follows the same reproducible .NET 10 restore/build contract as the repository baseline.
 
-```text
-release válida
-AND PackageId não é o placeholder
-AND NUGET_USER está configurado e não vazio
-```
+`.github/workflows/dependency-review.yml` reviews dependency changes in pull requests and blocks newly introduced High/Critical known vulnerabilities.
 
-Se `NUGET_USER` estiver ausente, vazio ou contiver apenas espaços, o release **não falha**: `NuGet/login` não é iniciado, nenhuma credencial OIDC de publicação é solicitada e `dotnet nuget push` não é executado. A tag e o GitHub Release continuam sendo criados normalmente; para um pacote real, `.nupkg` e `.snupkg` são anexados ao GitHub Release mesmo sem publicação no NuGet.
+Use `SECURITY.md` to report suspected vulnerabilities privately. Do not open sensitive vulnerability details in public issues.
 
-Se `NUGET_USER` estiver configurado e a publicação NuGet for habilitada, o GitHub Release só é criado depois que a publicação no NuGet concluir com sucesso, evitando sinalizar uma distribuição NuGet que falhou.
+## Optional SonarQube Cloud analysis
 
-O template não usa `NUGET_API_KEY` de longa duração.
+`.github/workflows/sonar.yml` provides optional SonarQube Cloud analysis for pull requests to `main` and pushes to `main`.
 
-### Proteção do placeholder
-
-O repositório-template usa `Template.Library` como identidade neutra. O workflow de release detecta essa identidade e impede sua publicação acidental no NuGet.org.
-
-O próprio template pode criar tag e GitHub Release versionados, mesmo sem `NUGET_USER`, mas não publica nem anexa o pacote placeholder. Em projetos gerados por `dotnet new`, o `PackageId` é substituído pelo nome real da biblioteca; o GitHub Release pode ser usado independentemente do NuGet, e a publicação no NuGet passa a ser permitida quando Trusted Publishing e `NUGET_USER` estiverem configurados.
-
-## Segurança e qualidade
-
-Os principais workflows têm responsabilidades separadas:
-
-| Workflow | Responsabilidade |
-| --- | --- |
-| `ci.yml` | restore, políticas de build, formatação, testes, cobertura, pack e validação de consumo |
-| `codeql.yml` | análise CodeQL para C# |
-| `dependency-review.yml` | bloqueio de novas vulnerabilidades High/Critical em PRs |
-| `sonar.yml` | análise opcional no SonarQube Cloud |
-| `release.yml` | validação, criação/verificação de tag, publicação NuGet opcional e GitHub Release |
-| `template-validation.yml` | validação end-to-end do `dotnet new` |
-| `sonar-template-validation.yml` | validação do contrato Sonar na saída gerada |
-| `versioning-validation.yml` | validação do contrato SemVer e metadata do pacote/assembly |
-| `release-publishing-validation.yml` | validação maintenance-only do pedido de release, tag e opt-in NuGet |
-| `github-template-initialization-validation.yml` | validação maintenance-only da inicialização via GitHub Template Repository |
-
-Separar esses fluxos torna falhas de build, segurança, análise externa, geração e release independentes e diagnosticáveis.
-
-## SonarQube Cloud opcional
-
-A análise do Sonar é opt-in. Configure o repository secret:
+The integration is deliberately opt-in. If the repository secret below does not exist or is empty, the workflow reports that SonarQube Cloud is disabled and finishes successfully without starting the scanner or contacting Sonar:
 
 ```text
 SONAR_TOKEN
 ```
 
-Sem esse secret, `sonar.yml` termina com sucesso sem iniciar o scanner.
-
-Por padrão, o workflow deriva:
+For repositories imported from GitHub using SonarQube Cloud's conventional coordinates, the workflow derives defaults from the GitHub repository itself:
 
 ```text
 project key  = <github-owner>_<repository-name>
@@ -361,7 +145,7 @@ organization = <github-owner>
 host         = https://sonarcloud.io
 ```
 
-Quando necessário, sobrescreva com Repository Variables:
+These values can be overridden with GitHub Repository Variables when the Sonar project uses different coordinates:
 
 ```text
 SONAR_PROJECT_KEY
@@ -369,22 +153,101 @@ SONAR_ORGANIZATION
 SONAR_HOST_URL
 ```
 
-## Conteúdo gerado versus manutenção do template
+Typical setup:
 
-A maior parte da baseline é copiada para projetos gerados: código, testes, build policies, lock files, dependências centralizadas, governança, CI, segurança, qualidade, release e tooling de pacote.
+1. Create or import the repository project in SonarQube Cloud.
+2. Add repository secret `SONAR_TOKEN` with a token authorized to analyze that project.
+3. If the derived coordinates do not match the Sonar project, add `SONAR_PROJECT_KEY` and/or `SONAR_ORGANIZATION` repository variables.
+4. Optionally set `SONAR_HOST_URL`; otherwise `https://sonarcloud.io` is used.
+5. Open a pull request or push to `main` and confirm the analysis appears in SonarQube Cloud.
 
-Conteúdo específico de manutenção do template é excluído, incluindo:
+The workflow uses the locally pinned SonarScanner for .NET, locked restore, a non-incremental Release build, tests, and Coverlet MTP output in OpenCover format. The OpenCover report is imported through `sonar.cs.opencover.reportsPaths`; this does not replace the Cobertura artifact produced by the primary CI workflow.
 
-- `.template.config/**`;
-- workflow e helper de inicialização via GitHub Template Repository;
-- workflows de validação exclusivos do template;
-- `docs/template-development.md`;
-- `docs/repository-administration.md`;
-- `README.md` e `README.en.md` deste repositório.
+Repository secrets and Repository Variables are administrative settings and are not inherited when another repository is created from this template. A generated repository therefore remains fully usable without Sonar until `SONAR_TOKEN` is configured.
 
-`docs/library-readme.md` é renomeado para `README.md` durante a geração. Assim, a biblioteca gerada recebe documentação orientada ao projeto final, não ao repositório-template.
+## Release and NuGet publishing
 
-## Estrutura principal
+`.github/workflows/release.yml` provides the release path for generated libraries. There are two supported entry points.
+
+### Recommended: run the Release workflow manually
+
+1. Open the repository **Actions** tab.
+2. Select the **Release** workflow.
+3. Click **Run workflow**.
+4. Select branch **main**.
+5. Enter **Release version**, for example `v1.0.0` or `v1.1.0-beta.1`.
+6. Start the workflow.
+
+The workflow rejects manual releases from any ref other than the `main` branch and fails early if the requested tag already exists. It then restores dependencies in locked mode, resolves the requested version through MSBuild, builds, tests, packs, and validates package and assembly metadata.
+
+Only after all validation succeeds does the workflow create the requested Git tag. The tag points exactly to the commit SHA validated by that workflow run. NuGet publication and GitHub Release creation happen only after this tag gate succeeds.
+
+### Alternative: push an existing release tag
+
+The traditional flow remains supported:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+For a tag-triggered execution, the workflow validates the package and verifies that the incoming tag resolves to the same commit SHA before publishing anything.
+
+### NuGet publication opt-in
+
+NuGet.org publication is explicitly **opt-in through the `NUGET_USER` Repository Variable**. The workflow enables NuGet publication only when:
+
+```text
+valid release
+AND publishable package identity
+AND NUGET_USER is configured and non-empty
+```
+
+When the gate is true, the workflow exchanges a GitHub OIDC token through `NuGet/login@v1`, publishes the `.nupkg`/`.snupkg` to NuGet.org, and creates the GitHub Release after publication succeeds.
+
+When `NUGET_USER` is absent, empty, or contains only whitespace, the release still succeeds: the workflow does **not** start `NuGet/login@v1`, does not request a publication credential, and does not execute `dotnet nuget push`. The Git tag and GitHub Release are still created. For a real package, the `.nupkg` and `.snupkg` artifacts are attached to the GitHub Release even though they were not published to NuGet.org.
+
+### Configure `NUGET_USER` in GitHub
+
+`NUGET_USER` is a **Repository Variable**, not a Repository Secret. If it does not exist yet:
+
+1. Open the repository on GitHub.
+2. Go to **Settings**.
+3. Open **Secrets and variables** → **Actions**.
+4. Select the **Variables** tab.
+5. Click **New repository variable**.
+6. Set **Name** to:
+
+   ```text
+   NUGET_USER
+   ```
+
+7. Set **Value** to the nuget.org profile name/username that owns or publishes the package and is referenced by the Trusted Publishing setup.
+8. Save the variable.
+
+If you do not want this repository to publish to NuGet.org, simply leave `NUGET_USER` undefined. No dummy value is required.
+
+### Configure NuGet.org Trusted Publishing
+
+The workflow uses NuGet.org **Trusted Publishing** with GitHub OIDC instead of storing a long-lived `NUGET_API_KEY`.
+
+To enable NuGet publication:
+
+1. Sign in to nuget.org and create a Trusted Publishing policy for this GitHub repository.
+2. Set the policy workflow file to:
+
+   ```text
+   .github/workflows/release.yml
+   ```
+
+3. Configure the GitHub Repository Variable `NUGET_USER` using the steps above.
+4. Ensure the package ID and package metadata are correct before starting the release.
+
+`NUGET_USER` is both the nuget.org profile name used by Trusted Publishing and the explicit NuGet publication-enablement flag. A repository can use the full tag and GitHub Release automation without defining it.
+
+If NuGet authentication or publication fails after publication has been enabled, the GitHub Release job does not run, preventing the repository from advertising a NuGet publication that did not complete.
+
+## Repository structure
 
 ```text
 .
@@ -392,21 +255,20 @@ Conteúdo específico de manutenção do template é excluído, incluindo:
 │   └── dotnet-tools.json
 ├── .github/
 │   └── workflows/
-├── .template.config/
-│   └── template.json
-├── docs/
-│   ├── library-readme.md
-│   ├── repository-administration.md
-│   └── template-development.md
+│       ├── ci.yml
+│       ├── codeql.yml
+│       ├── dependency-review.yml
+│       ├── release.yml
+│       └── sonar.yml
 ├── scripts/
 │   ├── ensure-release-tag.sh
 │   ├── resolve-nuget-publishing.sh
 │   ├── resolve-release-request.sh
 │   └── verify-package.cs
 ├── src/
-│   └── Template.Library/
+│   └── Brazilian.Primitives/
 ├── tests/
-│   └── Template.Library.Tests/
+│   └── Brazilian.Primitives.Tests/
 ├── CHANGELOG.md
 ├── CODE_OF_CONDUCT.md
 ├── CONTRIBUTING.md
@@ -414,33 +276,29 @@ Conteúdo específico de manutenção do template é excluído, incluindo:
 ├── Directory.Packages.props
 ├── LICENSE
 ├── README.md
-├── README.en.md
 ├── SECURITY.md
-├── Template.Library.slnx
+├── Brazilian.Primitives.slnx
 └── global.json
 ```
 
-## Documentação
+## GitHub setup after repository creation
 
-- [README in English](README.en.md): versão em inglês desta visão geral;
-- [Template development](docs/template-development.md): regras para manter e evoluir o custom template;
-- [Repository administration](docs/repository-administration.md): baseline de settings administrativos no GitHub;
-- [Generated library README](docs/library-readme.md): README usado em projetos criados por `dotnet new`;
-- [CONTRIBUTING.md](CONTRIBUTING.md): processo de contribuição e breaking changes;
-- [SECURITY.md](SECURITY.md): política de reporte e triagem de vulnerabilidades;
-- [CHANGELOG.md](CHANGELOG.md): histórico de mudanças relevantes;
-- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md): padrões de participação.
+Repository-level settings are not stored in Git, so they are not automatically recreated when this project is copied or generated. Review the target repository settings and configure what your project needs, especially:
 
-## Convenção `Template.Library`
+- the NuGet.org Trusted Publishing policy for `.github/workflows/release.yml` if NuGet publication is desired;
+- the `NUGET_USER` Repository Variable under **Settings → Secrets and variables → Actions → Variables** to opt in to NuGet publication;
+- optional SonarQube Cloud secret `SONAR_TOKEN` and any `SONAR_PROJECT_KEY`, `SONAR_ORGANIZATION`, or `SONAR_HOST_URL` overrides;
+- branch protection or rulesets;
+- environments and deployment protection rules, if your project adds them;
+- default GitHub Actions permissions;
+- security features such as Dependabot alerts, code scanning, secret scanning, and push protection when available.
 
-`Template.Library` é uma identidade neutra e intencional. Em `.template.config/template.json`, ela é o `sourceName` substituído pelo valor informado em `-n`/`--name`.
+Never commit secret values to the repository.
 
-Não substitua essa identidade no repositório-base por um produto ou domínio real. Mudanças nas regras de geração devem preservar a neutralidade do template e ser cobertas pelas validações end-to-end.
+Trimming and Native AOT compatibility are intentionally not promised by default. Enable those analyzers and package properties only when this library's public contract and implementation have been validated for those scenarios.
 
-## Contribuição
+## Contributing
 
-Consulte [CONTRIBUTING.md](CONTRIBUTING.md) antes de abrir um pull request.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the expected development and pull-request workflow and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for community standards.
 
-## Licença
-
-Distribuído sob a licença [MIT](LICENSE).
+Notable consumer-facing changes should be recorded under `Unreleased` in [CHANGELOG.md](CHANGELOG.md).

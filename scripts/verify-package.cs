@@ -46,7 +46,7 @@ var ns = nuspec.Root!.Name.Namespace;
 var metadata = nuspec.Root.Element(ns + "metadata")
     ?? throw new InvalidOperationException("Metadados do .nuspec não encontrados.");
 
-AssertEqual("Template.Library", metadata.Element(ns + "id")?.Value, "PackageId");
+AssertEqual("Brazilian.Primitives", metadata.Element(ns + "id")?.Value, "PackageId");
 AssertNotBlank(metadata.Element(ns + "description")?.Value, "Description");
 
 if (!string.IsNullOrWhiteSpace(expectedVersion))
@@ -54,9 +54,9 @@ if (!string.IsNullOrWhiteSpace(expectedVersion))
     AssertEqual(expectedVersion, metadata.Element(ns + "version")?.Value, "Version");
 }
 
-var assemblyEntry = packageArchive.GetEntry("lib/net10.0/Template.Library.dll")
+var assemblyEntry = packageArchive.GetEntry("lib/net10.0/Brazilian.Primitives.dll")
     ?? throw new InvalidOperationException("Assembly principal não encontrado no pacote.");
-AssertEntryExists(packageArchive, "lib/net10.0/Template.Library.xml");
+AssertEntryExists(packageArchive, "lib/net10.0/Brazilian.Primitives.xml");
 
 using var assemblyStream = new MemoryStream();
 using (var entryStream = assemblyEntry.Open())
@@ -105,7 +105,7 @@ if (requireSourceLink)
 }
 
 using var symbolsArchive = ZipFile.OpenRead(snupkg);
-var pdbEntry = symbolsArchive.GetEntry("lib/net10.0/Template.Library.pdb")
+var pdbEntry = symbolsArchive.GetEntry("lib/net10.0/Brazilian.Primitives.pdb")
     ?? throw new InvalidOperationException("PDB não encontrado no .snupkg.");
 
 using var pdbStream = new MemoryStream();

@@ -1,9 +1,9 @@
 using AwesomeAssertions;
+using Brazilian.Primitives;
 using NSubstitute;
-using Template.Library;
 using Xunit;
 
-namespace Template.Library.Tests;
+namespace Brazilian.Primitives.Tests;
 
 public sealed class Class1Tests
 {

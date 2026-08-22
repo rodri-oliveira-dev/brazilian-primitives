@@ -284,7 +284,7 @@
           "xunit.v3.runner.common": "[4.0.0]"
         }
       },
-      "template.library": {
+      "brazilian.primitives": {
         "type": "Project"
       }
     }

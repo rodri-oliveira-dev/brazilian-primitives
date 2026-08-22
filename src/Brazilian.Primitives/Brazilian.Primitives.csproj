@@ -4,7 +4,7 @@
 
     <IsPackable>true</IsPackable>
     <EnablePackageValidation>true</EnablePackageValidation>
-    <PackageId>Template.Library</PackageId>
+    <PackageId>Brazilian.Primitives</PackageId>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <Description>TODO: Describe the library before publishing.</Description>
     <RepositoryType>git</RepositoryType>

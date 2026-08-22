@@ -72,7 +72,7 @@ jobs:
 
       - name: Restaurar dependências em locked mode
         if: ${{ env.SONAR_TOKEN != '' }}
-        run: dotnet restore Template.Library.slnx --locked-mode
+        run: dotnet restore Brazilian.Primitives.slnx --locked-mode
 
       - name: Iniciar análise Sonar
         if: ${{ env.SONAR_TOKEN != '' }}
@@ -87,12 +87,12 @@ jobs:
 
       - name: Compilar para análise
         if: ${{ env.SONAR_TOKEN != '' }}
-        run: dotnet build Template.Library.slnx --configuration Release --no-restore --no-incremental
+        run: dotnet build Brazilian.Primitives.slnx --configuration Release --no-restore --no-incremental
 
       - name: Executar testes e coletar cobertura OpenCover
         if: ${{ env.SONAR_TOKEN != '' }}
         run: >-
-          dotnet test Template.Library.slnx
+          dotnet test Brazilian.Primitives.slnx
           --configuration Release
           --no-build
           --coverlet
