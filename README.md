@@ -135,6 +135,16 @@ Console.WriteLine(ispb.Value); // 12345678
 
 See [the ISPB documentation](docs/ispb.md) for Banco Central boundaries and structural-only semantics.
 
+COMPE codes use the current 3-digit Banco Central layout contract and reject absence sentinels such as `999`:
+
+```csharp
+CodigoCompe codigo = CodigoCompe.Parse("001");
+
+Console.WriteLine(codigo.Value); // 001
+```
+
+See [the COMPE code documentation](docs/codigo-compe.md) for ISPB/STR separation and the 2027 number-code note.
+
 Legacy RG validation requires the issuing federative unit explicitly because there is no single national RG format or check-digit algorithm:
 
 ```csharp

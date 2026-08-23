@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- `CodigoCompe` value object with strict current 3-ASCII-digit structural parsing, leading-zero preservation, `999` sentinel rejection, no ISPB/CNPJ fallback, and `IParsable`/`ISpanParsable` support.
 - `Ispb` value object with strict 8-ASCII-digit structural parsing, leading-zero preservation, no CNPJ derivation, no invented checksum, and `IParsable`/`ISpanParsable` support.
 - `Cns` value object with strict 15-ASCII-digit parsing, official family support for prefixes `1`, `2`, `7`, `8`, and `9`, mathematical validation, and `IParsable`/`ISpanParsable` support.
 - `TituloEleitoral` value object with strict 12-ASCII-digit canonical parsing, origin-code handling for the 27 UFs plus Exterior, modulo-11 check-digit validation, `BrazilianState` mapping, and `IParsable`/`ISpanParsable` support.
