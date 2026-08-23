@@ -109,18 +109,30 @@ jobs:
         if: ${{ always() && env.SONAR_TOKEN != '' }}
         shell: bash
         run: |
-          echo "New Code Definition:"
-          curl --silent --show-error --user "$SONAR_TOKEN:" \
-            --get "$SONAR_HOST_URL/api/new_code_periods/show" \
-            --data-urlencode "project=$SONAR_PROJECT_KEY" \
-            --data-urlencode "branch=main" \
-            | jq '.' || true
-
           echo "Configurações de New Code específicas do projeto:"
           curl --silent --show-error --user "$SONAR_TOKEN:" \
             --get "$SONAR_HOST_URL/api/settings/values" \
             --data-urlencode "component=$SONAR_PROJECT_KEY" \
             | jq '[.settings[] | select(.key | contains("leak.period"))]' || true
+
+          echo "Baseline global/organizacional de New Code visível ao token:"
+          curl --silent --show-error --user "$SONAR_TOKEN:" \
+            --get "$SONAR_HOST_URL/api/settings/values" \
+            --data-urlencode "keys=sonar.leak.period,sonar.leak.period.type" \
+            | jq '.settings' || true
+
+          echo "Histórico de versões registrado nas análises da main:"
+          curl --fail --silent --show-error --user "$SONAR_TOKEN:" \
+            --get "$SONAR_HOST_URL/api/project_analyses/search" \
+            --data-urlencode "project=$SONAR_PROJECT_KEY" \
+            --data-urlencode "branch=main" \
+            --data-urlencode "ps=20" \
+            | jq '[.analyses[] | {
+                key,
+                date,
+                revision,
+                versionEvents: [.events[]? | select(.category == "VERSION") | {name, category}]
+              }]'
 
           echo "Quality Gates da organização:"
           gates="$(curl --fail --silent --show-error --user "$SONAR_TOKEN:" \
