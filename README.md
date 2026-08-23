@@ -1,6 +1,6 @@
 # Brazilian.Primitives
 
-Idioma: Português do Brasil | [English](README.en.md)
+Idioma: Português do Brasil | [English](https://github.com/rodri-oliveira-dev/brazilian-primitives/blob/main/README.en.md)
 
 Brazilian.Primitives é uma biblioteca .NET para modelar identificadores brasileiros como value objects imutáveis.
 
