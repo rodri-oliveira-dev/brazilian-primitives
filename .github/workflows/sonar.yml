@@ -74,6 +74,24 @@ jobs:
         if: ${{ env.SONAR_TOKEN != '' }}
         run: dotnet restore Brazilian.Primitives.slnx --locked-mode
 
+      - name: Resolver versão do projeto para Sonar
+        if: ${{ env.SONAR_TOKEN != '' }}
+        shell: bash
+        run: |
+          project="src/Brazilian.Primitives/Brazilian.Primitives.csproj"
+          version="$(dotnet msbuild "$project" -nologo -getProperty:PackageVersion \
+            | tr -d '\r' \
+            | sed '/^[[:space:]]*$/d' \
+            | tail -n 1)"
+
+          if [ -z "$version" ]; then
+            echo "PackageVersion não pôde ser resolvida para a análise Sonar."
+            exit 1
+          fi
+
+          echo "Sonar project version: $version"
+          echo "SONAR_PROJECT_VERSION=$version" >> "$GITHUB_ENV"
+
       - name: Iniciar análise Sonar
         if: ${{ env.SONAR_TOKEN != '' }}
         shell: bash
@@ -81,6 +99,7 @@ jobs:
           dotnet sonarscanner begin
           /k:"$SONAR_PROJECT_KEY"
           /o:"$SONAR_ORGANIZATION"
+          /v:"$SONAR_PROJECT_VERSION"
           /d:sonar.host.url="$SONAR_HOST_URL"
           /d:sonar.token="$SONAR_TOKEN"
           /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover*.xml"
