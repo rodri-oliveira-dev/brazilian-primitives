@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- `Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer` project/package boundary for optional Entity Framework Core SQL Server integration, with provider-specific naming, isolated dependency direction, Central Package Management, and locked restore support.
 - `CodigoCompe` value object with strict current 3-ASCII-digit structural parsing, leading-zero preservation, `999` sentinel rejection, no ISPB/CNPJ fallback, and `IParsable`/`ISpanParsable` support.
 - `Ispb` value object with strict 8-ASCII-digit structural parsing, leading-zero preservation, no CNPJ derivation, no invented checksum, and `IParsable`/`ISpanParsable` support.
 - `Cns` value object with strict 15-ASCII-digit parsing, official family support for prefixes `1`, `2`, `7`, `8`, and `9`, mathematical validation, and `IParsable`/`ISpanParsable` support.
