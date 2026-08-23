@@ -1,3 +1,4 @@
+using System.Globalization;
 using Brazilian.Primitives;
 using Xunit;
 
@@ -12,7 +13,7 @@ public sealed class CpfTests
     [InlineData("12345678909")]
     [InlineData("93541134780")]
     [InlineData("01234567890")]
-    public void IsValid_ReturnsTrue_ForKnownValidCpfs(string value)
+    public void IsValidReturnsTrueForKnownValidCpfs(string value)
     {
         Assert.True(Cpf.IsValid(value));
     }
@@ -20,9 +21,9 @@ public sealed class CpfTests
     [Theory]
     [InlineData("52998224725")]
     [InlineData("529.982.247-25")]
-    public void Parse_NormalizesSupportedRepresentations(string value)
+    public void ParseNormalizesSupportedRepresentations(string value)
     {
-        Cpf cpf = Cpf.Parse(value);
+        Cpf cpf = Cpf.Parse(value, CultureInfo.InvariantCulture);
 
         Assert.Equal("52998224725", cpf.Value);
         Assert.Equal("529.982.247-25", cpf.Formatted);
@@ -42,7 +43,7 @@ public sealed class CpfTests
     [InlineData("77777777777")]
     [InlineData("88888888888")]
     [InlineData("99999999999")]
-    public void IsValid_ReturnsFalse_ForRepeatedDigits(string value)
+    public void IsValidReturnsFalseForRepeatedDigits(string value)
     {
         Assert.False(Cpf.IsValid(value));
     }
@@ -60,7 +61,7 @@ public sealed class CpfTests
     [InlineData("529-982-247.25")]
     [InlineData("529 982 247 25")]
     [InlineData("５２９９８２２４７２５")]
-    public void TryParse_ReturnsFalse_ForInvalidInput(string? value)
+    public void TryParseReturnsFalseForInvalidInput(string? value)
     {
         bool parsed = Cpf.TryParse(value, out Cpf result);
 
@@ -73,34 +74,34 @@ public sealed class CpfTests
     [InlineData("5299822472")]
     [InlineData("52998224735")]
     [InlineData("529abc98224725")]
-    public void Parse_ThrowsFormatException_ForInvalidInput(string value)
+    public void ParseThrowsFormatExceptionForInvalidInput(string value)
     {
-        Assert.Throws<FormatException>(() => Cpf.Parse(value));
+        Assert.Throws<FormatException>(() => Cpf.Parse(value, CultureInfo.InvariantCulture));
     }
 
     [Fact]
-    public void Parse_ThrowsFormatException_ForNullInput()
+    public void ParseThrowsFormatExceptionForNullInput()
     {
-        Assert.Throws<FormatException>(() => Cpf.Parse(null!));
+        Assert.Throws<FormatException>(() => Cpf.Parse(null!, CultureInfo.InvariantCulture));
     }
 
     [Fact]
-    public void Equality_UsesNormalizedValue()
+    public void EqualityUsesNormalizedValue()
     {
-        Cpf unmasked = Cpf.Parse("52998224725");
-        Cpf masked = Cpf.Parse("529.982.247-25");
+        Cpf unmasked = Cpf.Parse("52998224725", CultureInfo.InvariantCulture);
+        Cpf masked = Cpf.Parse("529.982.247-25", CultureInfo.InvariantCulture);
 
         Assert.Equal(unmasked, masked);
         Assert.Equal(unmasked.GetHashCode(), masked.GetHashCode());
     }
 
     [Fact]
-    public void Parse_AndTryParse_SupportSpanContracts()
+    public void ParseAndTryParseSupportSpanContracts()
     {
         ReadOnlySpan<char> value = "529.982.247-25".AsSpan();
 
-        Cpf parsed = Cpf.Parse(value, provider: null);
-        bool success = Cpf.TryParse(value, provider: null, out Cpf tryParsed);
+        Cpf parsed = Cpf.Parse(value, CultureInfo.InvariantCulture);
+        bool success = Cpf.TryParse(value, CultureInfo.InvariantCulture, out Cpf tryParsed);
 
         Assert.True(success);
         Assert.Equal("52998224725", parsed.Value);
@@ -108,9 +109,9 @@ public sealed class CpfTests
     }
 
     [Fact]
-    public void ToString_ThrowsFormatException_ForUnsupportedFormat()
+    public void ToStringThrowsFormatExceptionForUnsupportedFormat()
     {
-        Cpf cpf = Cpf.Parse("52998224725");
+        Cpf cpf = Cpf.Parse("52998224725", CultureInfo.InvariantCulture);
 
         Assert.Throws<FormatException>(() => cpf.ToString("X", formatProvider: null));
     }
