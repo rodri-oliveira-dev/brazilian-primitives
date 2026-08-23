@@ -95,6 +95,16 @@ Console.WriteLine(nit.Value); // 12345678901
 
 See [the NIT documentation](docs/nit.md) for the format-only decision and Previdencia/CNIS boundary.
 
+PIS/PASEP validation includes the documented modulo-11 check digit:
+
+```csharp
+PisPasep pis = PisPasep.Parse("12044529868");
+
+Console.WriteLine(pis.Value); // 12044529868
+```
+
+See [the PIS/PASEP documentation](docs/pis-pasep.md) for the DV algorithm and NIT/NIS boundary.
+
 Legacy RG validation requires the issuing federative unit explicitly because there is no single national RG format or check-digit algorithm:
 
 ```csharp
