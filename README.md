@@ -51,6 +51,18 @@ Console.WriteLine(renavam.Value); // 00123456789
 
 See [the RENAVAM documentation](docs/renavam.md) for the 10+DV structure and historical zero-padding decision.
 
+Vehicle plates support the previous national and Mercosur/PIV sequence patterns:
+
+```csharp
+PlacaVeiculo placa = PlacaVeiculo.Parse("abc-1234");
+
+Console.WriteLine(placa.Value);     // ABC1234
+Console.WriteLine(placa.Formatted); // ABC-1234
+Console.WriteLine(placa.Padrao);    // NacionalAnterior
+```
+
+See [the vehicle plate documentation](docs/placa-veiculo.md) for sequence patterns and non-inferred visual metadata.
+
 Legacy RG validation requires the issuing federative unit explicitly because there is no single national RG format or check-digit algorithm:
 
 ```csharp
