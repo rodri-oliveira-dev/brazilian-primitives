@@ -67,13 +67,13 @@ A tabela abaixo documenta todas as 27 UFs. `checksum` significa que existe valid
 | MA | `Maranhao` | 9 dígitos | — | format-only | https://www.ma.gov.br/servicos/obter-1-via-do-rg-agendamento-on-line |
 | MT | `MatoGrosso` | 9 dígitos | — | format-only | https://www.politec.mt.gov.br/ |
 | MS | `MatoGrossoDoSul` | 9 dígitos | — | format-only | https://servicos.sejusp.ms.gov.br/ |
-| MG | `MinasGerais` | 8 dígitos; prefixo `M` opcional | `1.234.567-8`; `M1.234.567-8` | format-only | https://www.policiacivil.mg.gov.br/pagina/servicos-identificacao |
+| MG | `MinasGerais` | 8 dígitos | `12.345.678`, `MG-12.345.678`, `M-12.345.678` | format-only | https://procurase.seguranca.mg.gov.br/ |
 | PA | `Para` | 9 dígitos | — | format-only | https://www.policiacivil.pa.gov.br/ |
 | PB | `Paraiba` | 9 dígitos | — | format-only | https://agendamentos.pb.gov.br/SAA/ipc/home |
 | PR | `Parana` | 8 dígitos | — | format-only | https://www.iipar.pr.gov.br/ |
 | PE | `Pernambuco` | 9 dígitos | — | format-only | https://www.policiacivil.pe.gov.br/ |
 | PI | `Piaui` | 9 dígitos | — | format-only | https://www.policiacivil.pi.gov.br/ |
-| RJ | `RioDeJaneiro` | 8 dígitos | `1.234.567-8` | format-only | https://www.detran.rj.gov.br/todos-os-servicos/servicos-dic/carteira-de-identidade-nacional-cin.html |
+| RJ | `RioDeJaneiro` | 9 dígitos | `12.345.678-9` | format-only | https://www.palaciotiradentes.rj.gov.br/visitaguiada |
 | RN | `RioGrandeDoNorte` | 9 dígitos | — | format-only | https://www.policiacivil.rn.gov.br/ |
 | RS | `RioGrandeDoSul` | 10 dígitos | — | format-only | https://www.estado.rs.gov.br/ |
 | RO | `Rondonia` | 9 dígitos | — | format-only | https://www.policiacivil.ro.gov.br/ |
@@ -82,6 +82,29 @@ A tabela abaixo documenta todas as 27 UFs. `checksum` significa que existe valid
 | SP | `SaoPaulo` | 8 dígitos + DV (`0-9` ou `X`) | `12.030.001-1` | checksum | https://www3.ssp.sp.gov.br/aacweb/carrega-formulario |
 | SE | `Sergipe` | 9 dígitos | — | format-only | https://www.policiacivil.se.gov.br/ |
 | TO | `Tocantins` | 9 dígitos | — | format-only | https://www.policiacivil.to.gov.br/ |
+
+### Nota sobre Rio de Janeiro
+
+O formato legado do Rio de Janeiro é tratado como nove dígitos, com máscara `12.345.678-9`. A evidência de formato usada nesta versão inclui formulário público da Assembleia Legislativa do Estado do Rio de Janeiro, que apresenta exatamente esse padrão para o campo RG.
+
+A biblioteca não aplica checksum ao RG do RJ nesta versão; a validação permanece `format-only`.
+
+### Nota sobre Minas Gerais
+
+Minas Gerais usa oito dígitos no número estadual e é frequentemente representado com prefixo de UF, por exemplo `MG-12.345.678`. Fontes governamentais mineiras também preservam ocorrências históricas do prefixo `M-`.
+
+Para manter uma identidade canônica estável, `Value` guarda somente os oito dígitos. `Formatted` produz a representação explícita `MG-12.345.678`. O parser aceita as representações estritas:
+
+```text
+12345678
+12.345.678
+MG-12345678
+MG-12.345.678
+M-12345678
+M-12.345.678
+```
+
+Prefixos soltos, espaços e a máscara de RJ com hífen final não são aceitos para MG.
 
 ### Nota sobre São Paulo
 
@@ -102,11 +125,11 @@ A regra de SP não é reutilizada como fallback para nenhuma outra UF.
 Rg sp = Rg.Parse("120300011", BrazilianState.SaoPaulo);
 sp.Formatted; // 12.030.001-1
 
-Rg rj = Rg.Parse("12345678", BrazilianState.RioDeJaneiro);
-rj.Formatted; // 1.234.567-8
+Rg rj = Rg.Parse("123456789", BrazilianState.RioDeJaneiro);
+rj.Formatted; // 12.345.678-9
 
-Rg mg = Rg.Parse("M12345678", BrazilianState.MinasGerais);
-mg.Formatted; // M1.234.567-8
+Rg mg = Rg.Parse("12345678", BrazilianState.MinasGerais);
+mg.Formatted; // MG-12.345.678
 
 Rg sc = Rg.Parse("123456789", BrazilianState.SantaCatarina);
 sc.Formatted; // 123.456.789
