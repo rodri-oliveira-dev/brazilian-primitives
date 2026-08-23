@@ -8,6 +8,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- `CodigoCompe` value object with strict current 3-ASCII-digit structural parsing, leading-zero preservation, `999` sentinel rejection, no ISPB/CNPJ fallback, and `IParsable`/`ISpanParsable` support.
+- `Ispb` value object with strict 8-ASCII-digit structural parsing, leading-zero preservation, no CNPJ derivation, no invented checksum, and `IParsable`/`ISpanParsable` support.
+- `Cns` value object with strict 15-ASCII-digit parsing, official family support for prefixes `1`, `2`, `7`, `8`, and `9`, mathematical validation, and `IParsable`/`ISpanParsable` support.
+- `TituloEleitoral` value object with strict 12-ASCII-digit canonical parsing, origin-code handling for the 27 UFs plus Exterior, modulo-11 check-digit validation, `BrazilianState` mapping, and `IParsable`/`ISpanParsable` support.
+- `PisPasep` value object with strict 11-ASCII-digit parsing, leading-zero preservation, ANS-documented modulo-11 check-digit validation, and `IParsable`/`ISpanParsable` support.
+- `Nit` value object with strict 11-ASCII-digit structural parsing, leading-zero preservation, explicit format-only validation semantics, and `IParsable`/`ISpanParsable` support without conflating NIT with PIS/PASEP/NIS.
+- `TelefoneBrasileiro` value object and `TipoTelefoneBrasileiro` discriminator for fields that accept either fixed-line or mobile Brazilian numbers, delegating parsing, formatting, E.164 representation, and numbering-plan validation to `LandlinePhone` and `MobilePhone`.
+- `InscricaoEstadual` value object with mandatory `BrazilianState` context, explicit 27-UF structural strategy matrix, `ISENTO` rejection, state-aware equality, and documented format-only validation where no UF checksum is embedded.
+- `PlacaVeiculo` value object and `PadraoPlacaVeiculo` discriminator for previous national and Mercosur/PIV plate sequence patterns, with ASCII uppercase canonicalization, previous-pattern formatting, and optional algorithmic previous-to-Mercosur sequence conversion.
+- `Renavam` value object with strict current 11-digit parsing, leading-zero preservation, modulo-11 check-digit validation, structural-only semantics, and `IParsable`/`ISpanParsable` support.
+- `ChavePix` value object and `TipoChavePix` discriminator for CPF, CNPJ, mobile phone, email, and random EVP Pix keys, reusing existing primitives and applying Pix-specific canonicalization without external DICT lookup.
+- `CpfCnpj` value object and `TipoCpfCnpj` discriminator for fields that accept either CPF or CNPJ, delegating validation, canonicalization, formatting, equality, and alphanumeric CNPJ support to the existing primitives.
+- `Email` value object with strict ASCII dot-atom local-part validation, IDN domain normalization to lowercase Punycode, conservative case semantics, syntax-only validation, and `IParsable`/`ISpanParsable` support.
 - `Cep` value object with strict eight-ASCII-digit and canonical `00000-000` parsing, leading-zero preservation, canonical formatting, structural-only validation semantics, and `IParsable`/`ISpanParsable`/`IFormattable` support without runtime CEP lookup.
 - `MobilePhone` value object with strict national, formatted, +55, and E.164 parsing, shared Anatel DDD validation, mandatory nine-digit `9XXXX-XXXX` subscriber rules, legacy eight-digit mobile rejection, canonical formatting, and `IParsable`/`ISpanParsable`/`IFormattable` support.
 - `LandlinePhone` value object with strict national, formatted, +55, and E.164 parsing, centralized Anatel DDD validation, fixed-line subscriber range checks, rural `57` support, canonical formatting, and `IParsable`/`ISpanParsable`/`IFormattable` support.

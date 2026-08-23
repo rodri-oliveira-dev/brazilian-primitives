@@ -4,6 +4,147 @@ Reusable .NET 10 class library with a production-ready baseline for build, tests
 
 ## Domain primitives
 
+Email validation uses a strict ASCII dot-atom local part and normalizes only the domain to lowercase/Punycode:
+
+```csharp
+Email email = Email.Parse("User@Domínio.COM");
+
+Console.WriteLine(email.Value);     // User@xn--domnio-2wa.com
+Console.WriteLine(email.LocalPart); // User
+Console.WriteLine(email.Domain);    // xn--domnio-2wa.com
+```
+
+See [the Email documentation](docs/email.md) for syntax limits, IDN normalization, and why DNS/MX or mailbox
+existence checks stay outside the Core package.
+
+Fields that accept either CPF or CNPJ can use `CpfCnpj`, which delegates validation and formatting to the existing
+specific primitives:
+
+```csharp
+CpfCnpj documento = CpfCnpj.Parse("529.982.247-25");
+
+Console.WriteLine(documento.Tipo);      // Cpf
+Console.WriteLine(documento.Value);     // 52998224725
+Console.WriteLine(documento.Formatted); // 529.982.247-25
+```
+
+See [the CPF/CNPJ documentation](docs/cpf-cnpj.md) for the union semantics and alphanumeric CNPJ behavior.
+
+Pix keys are represented by `ChavePix`, with explicit type discrimination and canonical Pix values:
+
+```csharp
+ChavePix chave = ChavePix.Parse("(11) 98765-4321");
+
+Console.WriteLine(chave.Tipo);  // Celular
+Console.WriteLine(chave.Value); // +5511987654321
+```
+
+See [the Pix key documentation](docs/chave-pix.md) for CPF, CNPJ, mobile phone, email, and random EVP boundaries.
+
+RENAVAM validation keeps the current 11-digit representation and validates the modulo-11 check digit:
+
+```csharp
+Renavam renavam = Renavam.Parse("00123456789");
+
+Console.WriteLine(renavam.Value); // 00123456789
+```
+
+See [the RENAVAM documentation](docs/renavam.md) for the 10+DV structure and historical zero-padding decision.
+
+Vehicle plates support the previous national and Mercosur/PIV sequence patterns:
+
+```csharp
+PlacaVeiculo placa = PlacaVeiculo.Parse("abc-1234");
+
+Console.WriteLine(placa.Value);     // ABC1234
+Console.WriteLine(placa.Formatted); // ABC-1234
+Console.WriteLine(placa.Padrao);    // NacionalAnterior
+```
+
+See [the vehicle plate documentation](docs/placa-veiculo.md) for sequence patterns and non-inferred visual metadata.
+
+State tax registrations require explicit UF context:
+
+```csharp
+InscricaoEstadual ie = InscricaoEstadual.Parse("110042490114", BrazilianState.SaoPaulo);
+
+Console.WriteLine(ie.Value); // 110042490114
+Console.WriteLine(ie.State); // SaoPaulo
+```
+
+See [the Inscricao Estadual documentation](docs/inscricao-estadual.md) for the 27-UF matrix and format-only status.
+
+Fields that accept either fixed-line or mobile Brazilian numbers can use `TelefoneBrasileiro`:
+
+```csharp
+TelefoneBrasileiro telefone = TelefoneBrasileiro.Parse("+55 11 98765-4321");
+
+Console.WriteLine(telefone.Tipo); // Celular
+Console.WriteLine(telefone.E164); // +5511987654321
+```
+
+See [the Brazilian phone documentation](docs/telefone-brasileiro.md) for wrapper semantics and delegated formatting.
+
+NIT is represented as an 11-digit structural identifier, deliberately separated from PIS/PASEP/NIS:
+
+```csharp
+Nit nit = Nit.Parse("12345678901");
+
+Console.WriteLine(nit.Value); // 12345678901
+```
+
+See [the NIT documentation](docs/nit.md) for the format-only decision and Previdencia/CNIS boundary.
+
+PIS/PASEP validation includes the documented modulo-11 check digit:
+
+```csharp
+PisPasep pis = PisPasep.Parse("12044529868");
+
+Console.WriteLine(pis.Value); // 12044529868
+```
+
+See [the PIS/PASEP documentation](docs/pis-pasep.md) for the DV algorithm and NIT/NIS boundary.
+
+Titulo Eleitoral uses the canonical 12-digit representation and exposes the origin code, including Exterior:
+
+```csharp
+TituloEleitoral titulo = TituloEleitoral.Parse("000123450159");
+
+Console.WriteLine(titulo.CodigoOrigem); // 01
+```
+
+See [the Titulo Eleitoral documentation](docs/titulo-eleitoral.md) for origin-code mapping and DV rules.
+
+CNS validation supports the documented 15-digit families starting with `1`, `2`, `7`, `8`, and `9`:
+
+```csharp
+Cns cns = Cns.Parse("123456789010000");
+
+Console.WriteLine(cns.Value); // 123456789010000
+```
+
+See [the CNS documentation](docs/cns.md) for family algorithms and CADSUS boundaries.
+
+ISPB is represented as an 8-digit structural identifier, separate from CNPJ and COMPE:
+
+```csharp
+Ispb ispb = Ispb.Parse("12345678");
+
+Console.WriteLine(ispb.Value); // 12345678
+```
+
+See [the ISPB documentation](docs/ispb.md) for Banco Central boundaries and structural-only semantics.
+
+COMPE codes use the current 3-digit Banco Central layout contract and reject absence sentinels such as `999`:
+
+```csharp
+CodigoCompe codigo = CodigoCompe.Parse("001");
+
+Console.WriteLine(codigo.Value); // 001
+```
+
+See [the COMPE code documentation](docs/codigo-compe.md) for ISPB/STR separation and the 2027 number-code note.
+
 Legacy RG validation requires the issuing federative unit explicitly because there is no single national RG format or check-digit algorithm:
 
 ```csharp
