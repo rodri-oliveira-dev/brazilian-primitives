@@ -104,3 +104,24 @@ jobs:
         if: ${{ env.SONAR_TOKEN != '' }}
         shell: bash
         run: dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
+
+      - name: Diagnosticar Quality Gate da main
+        if: ${{ always() && env.SONAR_TOKEN != '' }}
+        shell: bash
+        run: |
+          response="$(curl --fail --silent --show-error --user "$SONAR_TOKEN:" \
+            "$SONAR_HOST_URL/api/qualitygates/project_status?projectKey=$SONAR_PROJECT_KEY&branch=main")"
+
+          echo "$response" | jq '{
+            status: .projectStatus.status,
+            conditions: [
+              .projectStatus.conditions[]
+              | {
+                  status,
+                  metricKey,
+                  comparator,
+                  errorThreshold,
+                  actualValue
+                }
+            ]
+          }'
