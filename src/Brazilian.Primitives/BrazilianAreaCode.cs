@@ -5,8 +5,10 @@ namespace Brazilian.Primitives;
 /// </summary>
 /// <remarks>
 /// This component is intentionally internal so phone value objects can share the official geographic-area rule
-/// without exposing allocation details as public API. The current set is cross-checked against Anatel's national
-/// STFC numbering-area publication: https://www.gov.br/anatel/pt-br/regulado/competicao/tarifas-e-precos/areas-locais-da-telefonia-fixa
+/// without exposing allocation details as public API. The current set is cross-checked against Anatel's Código
+/// Nacional publication and the official SMP numbering table:
+/// https://www.gov.br/anatel/pt-br/regulado/numeracao/codigos-nacionais
+/// https://www.gov.br/anatel/pt-br/regulado/numeracao/tabela-servico-movel-celular
 /// </remarks>
 internal static class BrazilianAreaCode
 {
