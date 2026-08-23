@@ -5,7 +5,7 @@ Brazilian.Primitives é uma biblioteca .NET para modelar identificadores brasile
 Ela valida e normaliza valores como CPF, CNPJ, CEP, chaves Pix, telefones brasileiros, placas, RENAVAM, CNH, CNS, título
 eleitoral, inscrição estadual e identificadores bancários sem fazer chamadas externas.
 
-For English documentation, see [README.md](README.md).
+For English documentation, see [README.en.md](README.en.md).
 
 ## Instalação
 

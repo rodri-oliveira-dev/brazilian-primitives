@@ -87,7 +87,7 @@ jobs:
           assert_equals Deterministic true
           assert_equals ContinuousIntegrationBuild true
           assert_equals EnablePackageValidation true
-          assert_equals PackageReadmeFile README.md
+          assert_equals PackageReadmeFile README.pt-BR.md
           assert_contains WarningsNotAsErrors NU1901
           assert_contains WarningsNotAsErrors NU1902
           assert_contains WarningsAsErrors NU1903
