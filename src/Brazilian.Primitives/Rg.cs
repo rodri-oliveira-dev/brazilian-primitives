@@ -453,7 +453,7 @@ public readonly record struct Rg
             _ => default,
         };
 
-        return state is >= BrazilianState.Acre and <= BrazilianState.Tocantins;
+        return rule.CanonicalLength != 0;
     }
 
     private enum RgMaskKind
