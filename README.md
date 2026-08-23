@@ -18,6 +18,17 @@ Console.WriteLine(rg.State);     // SaoPaulo
 
 See [the RG documentation](docs/rg.md) for the 27-UF coverage matrix, the distinction between checksum and format-only validation, and why CIN is modeled separately from legacy RG.
 
+CNH validation models only the 11-digit **Número do Registro Nacional**, not the CNH mirror number or RENACH form number:
+
+```csharp
+Cnh cnh = Cnh.Parse("62472927637");
+
+Console.WriteLine(cnh.Value);    // 62472927637
+Console.WriteLine(cnh.ToString()); // 62472927637
+```
+
+See [the CNH documentation](docs/cnh.md) for the modulo-11 dual check-digit algorithm, inter-DV discount rule, strict input format, and identifier boundaries.
+
 ## Requirements
 
 - .NET SDK 10
