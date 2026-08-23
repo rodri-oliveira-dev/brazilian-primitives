@@ -109,8 +109,19 @@ jobs:
         if: ${{ always() && env.SONAR_TOKEN != '' }}
         shell: bash
         run: |
+          analyses="$(curl --fail --silent --show-error --user "$SONAR_TOKEN:" \
+            "$SONAR_HOST_URL/api/project_analyses/search?project=$SONAR_PROJECT_KEY&branch=main&ps=1")"
+          analysis_id="$(echo "$analyses" | jq -r '.analyses[0].key // empty')"
+
+          if [ -z "$analysis_id" ]; then
+            echo "Nenhuma análise da main encontrada para diagnóstico."
+            exit 1
+          fi
+
+          echo "Sonar main analysis id: $analysis_id"
+
           response="$(curl --fail --silent --show-error --user "$SONAR_TOKEN:" \
-            "$SONAR_HOST_URL/api/qualitygates/project_status?projectKey=$SONAR_PROJECT_KEY&branch=main")"
+            "$SONAR_HOST_URL/api/qualitygates/project_status?analysisId=$analysis_id")"
 
           echo "$response" | jq '{
             status: .projectStatus.status,
