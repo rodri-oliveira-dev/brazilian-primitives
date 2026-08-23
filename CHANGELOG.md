@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- `Cnpj` value object with strict numeric parsing, modulo-11 validation, canonical formatting, `IParsable`/`ISpanParsable` support, leading-zero preservation, and an API contract prepared for future alphanumeric CNPJ support.
 - `Cpf` value object with strict parsing, modulo-11 validation, canonical formatting, `IParsable`/`ISpanParsable` support, and consumer documentation.
 - Primary GitHub Actions CI workflow with locked restore, Release build, tests, Cobertura coverage, NuGet packaging, package validation, and downloadable coverage/package artifacts.
 - CodeQL security analysis for C# on pull requests, pushes to `main`, and a weekly scheduled scan using a reproducible manual .NET build.
