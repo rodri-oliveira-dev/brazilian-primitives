@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- `Nit` value object with strict 11-ASCII-digit structural parsing, leading-zero preservation, explicit format-only validation semantics, and `IParsable`/`ISpanParsable` support without conflating NIT with PIS/PASEP/NIS.
 - `TelefoneBrasileiro` value object and `TipoTelefoneBrasileiro` discriminator for fields that accept either fixed-line or mobile Brazilian numbers, delegating parsing, formatting, E.164 representation, and numbering-plan validation to `LandlinePhone` and `MobilePhone`.
 - `InscricaoEstadual` value object with mandatory `BrazilianState` context, explicit 27-UF structural strategy matrix, `ISENTO` rejection, state-aware equality, and documented format-only validation where no UF checksum is embedded.
 - `PlacaVeiculo` value object and `PadraoPlacaVeiculo` discriminator for previous national and Mercosur/PIV plate sequence patterns, with ASCII uppercase canonicalization, previous-pattern formatting, and optional algorithmic previous-to-Mercosur sequence conversion.

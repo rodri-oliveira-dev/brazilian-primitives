@@ -85,6 +85,16 @@ Console.WriteLine(telefone.E164); // +5511987654321
 
 See [the Brazilian phone documentation](docs/telefone-brasileiro.md) for wrapper semantics and delegated formatting.
 
+NIT is represented as an 11-digit structural identifier, deliberately separated from PIS/PASEP/NIS:
+
+```csharp
+Nit nit = Nit.Parse("12345678901");
+
+Console.WriteLine(nit.Value); // 12345678901
+```
+
+See [the NIT documentation](docs/nit.md) for the format-only decision and Previdencia/CNIS boundary.
+
 Legacy RG validation requires the issuing federative unit explicitly because there is no single national RG format or check-digit algorithm:
 
 ```csharp
