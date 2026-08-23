@@ -41,6 +41,16 @@ Console.WriteLine(chave.Value); // +5511987654321
 
 See [the Pix key documentation](docs/chave-pix.md) for CPF, CNPJ, mobile phone, email, and random EVP boundaries.
 
+RENAVAM validation keeps the current 11-digit representation and validates the modulo-11 check digit:
+
+```csharp
+Renavam renavam = Renavam.Parse("00123456789");
+
+Console.WriteLine(renavam.Value); // 00123456789
+```
+
+See [the RENAVAM documentation](docs/renavam.md) for the 10+DV structure and historical zero-padding decision.
+
 Legacy RG validation requires the issuing federative unit explicitly because there is no single national RG format or check-digit algorithm:
 
 ```csharp
