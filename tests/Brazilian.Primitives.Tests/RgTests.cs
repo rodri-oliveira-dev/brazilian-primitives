@@ -24,7 +24,7 @@ public sealed class RgTests
     [InlineData(BrazilianState.Parana, "12345678")]
     [InlineData(BrazilianState.Pernambuco, "123456789")]
     [InlineData(BrazilianState.Piaui, "123456789")]
-    [InlineData(BrazilianState.RioDeJaneiro, "12345678")]
+    [InlineData(BrazilianState.RioDeJaneiro, "123456789")]
     [InlineData(BrazilianState.RioGrandeDoNorte, "123456789")]
     [InlineData(BrazilianState.RioGrandeDoSul, "1234567890")]
     [InlineData(BrazilianState.Rondonia, "123456789")]
@@ -110,36 +110,61 @@ public sealed class RgTests
     }
 
     [Fact]
-    public void RioDeJaneiroSupportsKnownMaskWithoutClaimingChecksumValidation()
+    public void RioDeJaneiroSupportsNineDigitLegacyMaskWithoutClaimingChecksumValidation()
     {
-        Rg raw = Rg.Parse("12345678", BrazilianState.RioDeJaneiro);
-        Rg masked = Rg.Parse("1.234.567-8", BrazilianState.RioDeJaneiro);
+        Rg raw = Rg.Parse("123456789", BrazilianState.RioDeJaneiro);
+        Rg masked = Rg.Parse("12.345.678-9", BrazilianState.RioDeJaneiro);
 
         Assert.Equal(raw, masked);
-        Assert.Equal("12345678", raw.Value);
-        Assert.Equal("1.234.567-8", raw.Formatted);
+        Assert.Equal("123456789", raw.Value);
+        Assert.Equal("12.345.678-9", raw.Formatted);
     }
 
     [Theory]
-    [InlineData("M12345678")]
-    [InlineData("m12345678")]
-    [InlineData("M1.234.567-8")]
-    [InlineData("m1.234.567-8")]
-    public void MinasGeraisPreservesAndNormalizesKnownLetterPrefix(string value)
+    [InlineData("12345678")]
+    [InlineData("1.234.567-8")]
+    public void RioDeJaneiroRejectsIncorrectEightDigitShape(string value)
+    {
+        Assert.False(Rg.IsValid(value, BrazilianState.RioDeJaneiro));
+    }
+
+    [Theory]
+    [InlineData("12345678")]
+    [InlineData("12.345.678")]
+    [InlineData("MG-12345678")]
+    [InlineData("mg-12345678")]
+    [InlineData("MG-12.345.678")]
+    [InlineData("M-12345678")]
+    [InlineData("M-12.345.678")]
+    [InlineData("m-12.345.678")]
+    public void MinasGeraisNormalizesKnownLegacyRepresentations(string value)
     {
         Rg rg = Rg.Parse(value, BrazilianState.MinasGerais);
 
-        Assert.Equal("M12345678", rg.Value);
-        Assert.Equal("M1.234.567-8", rg.Formatted);
+        Assert.Equal("12345678", rg.Value);
+        Assert.Equal("MG-12.345.678", rg.Formatted);
+        Assert.Equal(BrazilianState.MinasGerais, rg.State);
+    }
+
+    [Theory]
+    [InlineData("1.234.567-8")]
+    [InlineData("M1.234.567-8")]
+    [InlineData("M12345678")]
+    [InlineData("MG 12.345.678")]
+    public void MinasGeraisRejectsIncorrectRioStyleAndLoosePrefixes(string value)
+    {
+        Assert.False(Rg.IsValid(value, BrazilianState.MinasGerais));
     }
 
     [Fact]
-    public void MinasGeraisAlsoAcceptsUnprefixedLegacyNumber()
+    public void MinasGeraisEqualityUsesCanonicalDigitsAcrossPrefixes()
     {
-        Rg rg = Rg.Parse("12345678", BrazilianState.MinasGerais);
+        Rg raw = Rg.Parse("12345678", BrazilianState.MinasGerais);
+        Rg prefixed = Rg.Parse("MG-12.345.678", BrazilianState.MinasGerais);
+        Rg historicalPrefix = Rg.Parse("M-12.345.678", BrazilianState.MinasGerais);
 
-        Assert.Equal("12345678", rg.Value);
-        Assert.Equal("1.234.567-8", rg.Formatted);
+        Assert.Equal(raw, prefixed);
+        Assert.Equal(raw, historicalPrefix);
     }
 
     [Fact]
