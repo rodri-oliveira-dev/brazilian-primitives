@@ -41,10 +41,10 @@ jobs:
           build-mode: manual
 
       - name: Restaurar dependências em locked mode
-        run: dotnet restore Brazilian.Primitives.slnx --locked-mode
+        run: dotnet restore Brazilian.PrimitivesTypes.slnx --locked-mode
 
       - name: Compilar para análise
-        run: dotnet build Brazilian.Primitives.slnx --configuration Release --no-restore
+        run: dotnet build Brazilian.PrimitivesTypes.slnx --configuration Release --no-restore
 
       - name: Executar análise CodeQL
         uses: github/codeql-action/analyze@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # v4

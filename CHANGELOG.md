@@ -44,6 +44,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- Renamed the technical library identity to `Brazilian.PrimitivesTypes`, including solution, project paths, NuGet
+  `PackageId`, assembly/root namespace, C# namespaces, tests, scripts, workflows, and documentation.
 - Reorganized public documentation into maintained English and Brazilian Portuguese entry points, getting-started
   guides, design notes, and per-primitive references aligned with the implemented value objects.
 - Moved the Brazilian Portuguese README content into `README.md` with an English-language selector at the top.

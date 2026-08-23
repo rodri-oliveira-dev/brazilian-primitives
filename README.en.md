@@ -1,6 +1,6 @@
-# Brazilian.Primitives
+# Brazilian.PrimitivesTypes
 
-Brazilian.Primitives is a small .NET library for modeling Brazilian identifiers as immutable value objects.
+Brazilian.PrimitivesTypes is a small .NET library for modeling Brazilian identifiers as immutable value objects.
 
 It validates and normalizes values such as CPF, CNPJ, CEP, Pix keys, Brazilian phone numbers, vehicle plates, RENAVAM,
 CNH, CNS, voter registration numbers, state tax registrations, and banking identifiers without making external network
@@ -11,7 +11,7 @@ The primary documentation is Brazilian Portuguese: [README.md](README.md).
 ## Install
 
 ```bash
-dotnet add package Brazilian.Primitives
+dotnet add package Brazilian.PrimitivesTypes
 ```
 
 The current repository targets .NET 10.
@@ -19,7 +19,7 @@ The current repository targets .NET 10.
 ## Quick Example
 
 ```csharp
-using Brazilian.Primitives;
+using Brazilian.PrimitivesTypes;
 
 Cpf cpf = Cpf.Parse("529.982.247-25");
 Cnpj cnpj = Cnpj.Parse("00.000.000/e08g-12");
@@ -41,7 +41,7 @@ Console.WriteLine(pix.Value);       // +5511987654321
 - Implements local check-digit algorithms where the current type actually embeds one.
 - Separates structural or mathematical validity from real-world existence.
 
-For international developers, start with [Brazilian primitives explained](docs/en/brazilian-primitives-explained.md).
+For international developers, start with [Brazilian.PrimitivesTypes explained](docs/en/brazilian-primitives-types-explained.md).
 
 ## Validation Boundaries
 
@@ -81,15 +81,15 @@ Read more in [Design principles](docs/en/design-principles.md).
 ```bash
 dotnet tool restore
 dotnet restore --locked-mode
-dotnet format Brazilian.Primitives.slnx --verify-no-changes --no-restore
-dotnet build Brazilian.Primitives.slnx --configuration Release --no-restore
-dotnet test Brazilian.Primitives.slnx --configuration Release --no-build
+dotnet format Brazilian.PrimitivesTypes.slnx --verify-no-changes --no-restore
+dotnet build Brazilian.PrimitivesTypes.slnx --configuration Release --no-restore
+dotnet test Brazilian.PrimitivesTypes.slnx --configuration Release --no-build
 ```
 
 Packaging validation:
 
 ```bash
-dotnet pack src/Brazilian.Primitives/Brazilian.Primitives.csproj --configuration Release --no-build --output artifacts/packages
+dotnet pack src/Brazilian.PrimitivesTypes/Brazilian.PrimitivesTypes.csproj --configuration Release --no-build --output artifacts/packages
 dotnet run --file scripts/verify-package.cs -- artifacts/packages
 ```
 
