@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- `Rg` value object and `BrazilianState` context with explicit legacy RG strategies for all 27 UFs, strict state-aware parsing, São Paulo SSP/IIRGD check-digit validation, format-only validation where no sufficiently reliable checksum source is available, and explicit distinction from CIN.
 - `Cnpj` value object with strict numeric and alphanumeric parsing, 2026 Receita Federal ASCII-minus-48 modulo-11 validation, uppercase canonicalization, canonical formatting, `IParsable`/`ISpanParsable` support, and leading-zero preservation.
 - `Cpf` value object with strict parsing, modulo-11 validation, canonical formatting, `IParsable`/`ISpanParsable` support, and consumer documentation.
 - Primary GitHub Actions CI workflow with locked restore, Release build, tests, Cobertura coverage, NuGet packaging, package validation, and downloadable coverage/package artifacts.
