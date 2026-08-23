@@ -6,7 +6,7 @@ It validates and normalizes values such as CPF, CNPJ, CEP, Pix keys, Brazilian p
 CNH, CNS, voter registration numbers, state tax registrations, and banking identifiers without making external network
 calls.
 
-The primary documentation is Brazilian Portuguese: [README.pt-BR.md](README.pt-BR.md).
+The primary documentation is Brazilian Portuguese: [README.md](README.md).
 
 ## Install
 
