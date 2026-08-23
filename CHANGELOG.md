@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- `Cns` value object with strict 15-ASCII-digit parsing, official family support for prefixes `1`, `2`, `7`, `8`, and `9`, mathematical validation, and `IParsable`/`ISpanParsable` support.
 - `TituloEleitoral` value object with strict 12-ASCII-digit canonical parsing, origin-code handling for the 27 UFs plus Exterior, modulo-11 check-digit validation, `BrazilianState` mapping, and `IParsable`/`ISpanParsable` support.
 - `PisPasep` value object with strict 11-ASCII-digit parsing, leading-zero preservation, ANS-documented modulo-11 check-digit validation, and `IParsable`/`ISpanParsable` support.
 - `Nit` value object with strict 11-ASCII-digit structural parsing, leading-zero preservation, explicit format-only validation semantics, and `IParsable`/`ISpanParsable` support without conflating NIT with PIS/PASEP/NIS.

@@ -115,6 +115,16 @@ Console.WriteLine(titulo.CodigoOrigem); // 01
 
 See [the Titulo Eleitoral documentation](docs/titulo-eleitoral.md) for origin-code mapping and DV rules.
 
+CNS validation supports the documented 15-digit families starting with `1`, `2`, `7`, `8`, and `9`:
+
+```csharp
+Cns cns = Cns.Parse("123456789010000");
+
+Console.WriteLine(cns.Value); // 123456789010000
+```
+
+See [the CNS documentation](docs/cns.md) for family algorithms and CADSUS boundaries.
+
 Legacy RG validation requires the issuing federative unit explicitly because there is no single national RG format or check-digit algorithm:
 
 ```csharp
