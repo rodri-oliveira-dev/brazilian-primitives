@@ -4,6 +4,19 @@ Reusable .NET 10 class library with a production-ready baseline for build, tests
 
 ## Domain primitives
 
+Email validation uses a strict ASCII dot-atom local part and normalizes only the domain to lowercase/Punycode:
+
+```csharp
+Email email = Email.Parse("User@Domínio.COM");
+
+Console.WriteLine(email.Value);     // User@xn--domnio-2wa.com
+Console.WriteLine(email.LocalPart); // User
+Console.WriteLine(email.Domain);    // xn--domnio-2wa.com
+```
+
+See [the Email documentation](docs/email.md) for syntax limits, IDN normalization, and why DNS/MX or mailbox
+existence checks stay outside the Core package.
+
 Legacy RG validation requires the issuing federative unit explicitly because there is no single national RG format or check-digit algorithm:
 
 ```csharp

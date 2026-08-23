@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- `Email` value object with strict ASCII dot-atom local-part validation, IDN domain normalization to lowercase Punycode, conservative case semantics, syntax-only validation, and `IParsable`/`ISpanParsable` support.
 - `Cep` value object with strict eight-ASCII-digit and canonical `00000-000` parsing, leading-zero preservation, canonical formatting, structural-only validation semantics, and `IParsable`/`ISpanParsable`/`IFormattable` support without runtime CEP lookup.
 - `MobilePhone` value object with strict national, formatted, +55, and E.164 parsing, shared Anatel DDD validation, mandatory nine-digit `9XXXX-XXXX` subscriber rules, legacy eight-digit mobile rejection, canonical formatting, and `IParsable`/`ISpanParsable`/`IFormattable` support.
 - `LandlinePhone` value object with strict national, formatted, +55, and E.164 parsing, centralized Anatel DDD validation, fixed-line subscriber range checks, rural `57` support, canonical formatting, and `IParsable`/`ISpanParsable`/`IFormattable` support.
