@@ -74,6 +74,24 @@ jobs:
         if: ${{ env.SONAR_TOKEN != '' }}
         run: dotnet restore Brazilian.Primitives.slnx --locked-mode
 
+      - name: Resolver versão do projeto para Sonar
+        if: ${{ env.SONAR_TOKEN != '' }}
+        shell: bash
+        run: |
+          project="src/Brazilian.Primitives/Brazilian.Primitives.csproj"
+          version="$(dotnet msbuild "$project" -nologo -getProperty:PackageVersion \
+            | tr -d '\r' \
+            | sed '/^[[:space:]]*$/d' \
+            | tail -n 1)"
+
+          if [ -z "$version" ]; then
+            echo "PackageVersion não pôde ser resolvida para a análise Sonar."
+            exit 1
+          fi
+
+          echo "Sonar project version: $version"
+          echo "SONAR_PROJECT_VERSION=$version" >> "$GITHUB_ENV"
+
       - name: Iniciar análise Sonar
         if: ${{ env.SONAR_TOKEN != '' }}
         shell: bash
@@ -81,6 +99,7 @@ jobs:
           dotnet sonarscanner begin
           /k:"$SONAR_PROJECT_KEY"
           /o:"$SONAR_ORGANIZATION"
+          /v:"$SONAR_PROJECT_VERSION"
           /d:sonar.host.url="$SONAR_HOST_URL"
           /d:sonar.token="$SONAR_TOKEN"
           /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover*.xml"
@@ -104,102 +123,3 @@ jobs:
         if: ${{ env.SONAR_TOKEN != '' }}
         shell: bash
         run: dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
-
-      - name: Diagnosticar configuração Sonar da main
-        if: ${{ always() && env.SONAR_TOKEN != '' }}
-        shell: bash
-        run: |
-          echo "Configurações de New Code específicas do projeto:"
-          curl --silent --show-error --user "$SONAR_TOKEN:" \
-            --get "$SONAR_HOST_URL/api/settings/values" \
-            --data-urlencode "component=$SONAR_PROJECT_KEY" \
-            | jq '[.settings[] | select(.key | contains("leak.period"))]' || true
-
-          echo "Baseline global/organizacional de New Code visível ao token:"
-          curl --silent --show-error --user "$SONAR_TOKEN:" \
-            --get "$SONAR_HOST_URL/api/settings/values" \
-            --data-urlencode "keys=sonar.leak.period,sonar.leak.period.type" \
-            | jq '.settings' || true
-
-          echo "Histórico de versões registrado nas análises da main:"
-          curl --fail --silent --show-error --user "$SONAR_TOKEN:" \
-            --get "$SONAR_HOST_URL/api/project_analyses/search" \
-            --data-urlencode "project=$SONAR_PROJECT_KEY" \
-            --data-urlencode "branch=main" \
-            --data-urlencode "ps=20" \
-            | jq '[.analyses[] | {
-                key,
-                date,
-                revision,
-                versionEvents: [.events[]? | select(.category == "VERSION") | {name, category}]
-              }]'
-
-          echo "Quality Gates da organização:"
-          gates="$(curl --fail --silent --show-error --user "$SONAR_TOKEN:" \
-            --get "$SONAR_HOST_URL/api/qualitygates/list" \
-            --data-urlencode "organization=$SONAR_ORGANIZATION")"
-          echo "$gates" | jq '[.qualitygates[] | {id, name, isDefault, isBuiltIn}]'
-
-          default_gate_id="$(echo "$gates" | jq -r '.qualitygates[] | select(.isDefault == true) | .id' | head -n 1)"
-          if [ -n "$default_gate_id" ]; then
-            echo "Condições do Quality Gate padrão:"
-            curl --fail --silent --show-error --user "$SONAR_TOKEN:" \
-              --get "$SONAR_HOST_URL/api/qualitygates/show" \
-              --data-urlencode "id=$default_gate_id" \
-              --data-urlencode "organization=$SONAR_ORGANIZATION" \
-              | jq '{name, conditions}'
-          fi
-
-          metrics="$(curl --fail --silent --show-error --user "$SONAR_TOKEN:" \
-            "$SONAR_HOST_URL/api/metrics/search?ps=500")"
-
-          metric_keys="$(echo "$metrics" | jq -r '[
-            .metrics[].key
-            | select(
-                . == "coverage"
-                or . == "duplicated_lines_density"
-                or . == "reliability_rating"
-                or . == "security_rating"
-                or . == "sqale_rating"
-                or . == "security_hotspots_reviewed"
-                or . == "new_coverage"
-                or . == "new_duplicated_lines_density"
-                or . == "new_reliability_rating"
-                or . == "new_security_rating"
-                or . == "new_maintainability_rating"
-                or . == "new_security_hotspots_reviewed"
-              )
-          ] | join(",")')"
-
-          measures="$(curl --fail --silent --show-error --user "$SONAR_TOKEN:" \
-            --get "$SONAR_HOST_URL/api/measures/component" \
-            --data-urlencode "component=$SONAR_PROJECT_KEY" \
-            --data-urlencode "branch=main" \
-            --data-urlencode "metricKeys=$metric_keys")"
-
-          echo "Métricas da main:"
-          echo "$measures" | jq '{
-            component: .component.key,
-            measures: [
-              .component.measures[]
-              | {
-                  metric,
-                  value,
-                  period
-                }
-            ]
-          }'
-
-          issues="$(curl --fail --silent --show-error --user "$SONAR_TOKEN:" \
-            --get "$SONAR_HOST_URL/api/issues/search" \
-            --data-urlencode "componentKeys=$SONAR_PROJECT_KEY" \
-            --data-urlencode "branch=main" \
-            --data-urlencode "resolved=false" \
-            --data-urlencode "ps=1" \
-            --data-urlencode "facets=types,severities")"
-
-          echo "Issues abertas da main:"
-          echo "$issues" | jq '{
-            openIssues: .total,
-            facets: .facets
-          }'
