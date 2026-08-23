@@ -17,6 +17,19 @@ Console.WriteLine(email.Domain);    // xn--domnio-2wa.com
 See [the Email documentation](docs/email.md) for syntax limits, IDN normalization, and why DNS/MX or mailbox
 existence checks stay outside the Core package.
 
+Fields that accept either CPF or CNPJ can use `CpfCnpj`, which delegates validation and formatting to the existing
+specific primitives:
+
+```csharp
+CpfCnpj documento = CpfCnpj.Parse("529.982.247-25");
+
+Console.WriteLine(documento.Tipo);      // Cpf
+Console.WriteLine(documento.Value);     // 52998224725
+Console.WriteLine(documento.Formatted); // 529.982.247-25
+```
+
+See [the CPF/CNPJ documentation](docs/cpf-cnpj.md) for the union semantics and alphanumeric CNPJ behavior.
+
 Legacy RG validation requires the issuing federative unit explicitly because there is no single national RG format or check-digit algorithm:
 
 ```csharp
