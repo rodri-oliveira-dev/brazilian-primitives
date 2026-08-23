@@ -32,7 +32,10 @@ public readonly record struct Rg
     /// <summary>
     /// Gets the issuing federative unit.
     /// </summary>
-    public BrazilianState State { get; }
+    public BrazilianState State
+    {
+        get;
+    }
 
     /// <summary>
     /// Gets the known display representation for the issuing state. States without a supported mask return <see cref="Value"/>.
