@@ -2,6 +2,22 @@
 
 Reusable .NET 10 class library with a production-ready baseline for build, tests, dependency management, packaging, security analysis, release automation, and repository governance.
 
+## Domain primitives
+
+Legacy RG validation requires the issuing federative unit explicitly because there is no single national RG format or check-digit algorithm:
+
+```csharp
+using Brazilian.Primitives;
+
+Rg rg = Rg.Parse("12.030.001-1", BrazilianState.SaoPaulo);
+
+Console.WriteLine(rg.Value);     // 120300011
+Console.WriteLine(rg.Formatted); // 12.030.001-1
+Console.WriteLine(rg.State);     // SaoPaulo
+```
+
+See [the RG documentation](docs/rg.md) for the 27-UF coverage matrix, the distinction between checksum and format-only validation, and why CIN is modeled separately from legacy RG.
+
 ## Requirements
 
 - .NET SDK 10
