@@ -10,7 +10,7 @@
 | Entrada aceita | somente sem máscara |
 | Estrutura | 8 dígitos sequenciais, 2 de origem, 2 DVs |
 | Origem | `01` a `27` mapeiam UFs; `28` representa Exterior |
-| Dígitos verificadores | dois cálculos módulo 11 |
+| Dígitos verificadores | dois cálculos módulo 11, incluindo exceção do primeiro DV para origens `01` e `02` quando o resto é 10 |
 
 ```csharp
 TituloEleitoral titulo = TituloEleitoral.Parse("000123450159");

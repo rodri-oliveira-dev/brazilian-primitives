@@ -23,4 +23,9 @@ Console.WriteLine(email.Value);   // user@example.com
 
 The generic `Email` primitive preserves local-part case; Pix email keys are lowercased by `ChavePix`.
 
+`Parse`, `TryParse`, and `IsValid` infer the key kind from the supplied text. If an untyped input is valid for more than
+one key kind, for example a value that is both a valid CPF and a valid Brazilian mobile phone, it is rejected as
+ambiguous. When the key kind is already known, use the explicit factories: `From(Cpf)`, `From(MobilePhone)`,
+`From(Cnpj)`, `From(Email)`, or `FromChaveAleatoria`.
+
 Validation does not query DICT, banks, Receita Federal, DNS, phone portability, or account systems.

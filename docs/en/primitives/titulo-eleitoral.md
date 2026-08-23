@@ -10,7 +10,7 @@
 | Accepted input | unmasked only |
 | Structure | 8 sequential digits, 2 origin digits, 2 check digits |
 | Origin | `01` through `27` map to states; `28` is Exterior |
-| Check digits | two modulo-11 calculations |
+| Check digits | two modulo-11 calculations, including the first-digit remainder-10 exception for origins `01` and `02` |
 
 ```csharp
 TituloEleitoral titulo = TituloEleitoral.Parse("000123450159");

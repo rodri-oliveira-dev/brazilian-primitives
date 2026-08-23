@@ -23,4 +23,9 @@ Console.WriteLine(email.Value);   // user@example.com
 
 `Email` preserva case do local part; `ChavePix` aplica lowercase porque esse é o contrato da chave Pix de email.
 
+`Parse`, `TryParse` e `IsValid` inferem o tipo da chave a partir do texto. Se uma entrada sem tipo explícito for válida
+para mais de um tipo, por exemplo um valor que seja simultaneamente CPF válido e celular brasileiro válido, ela é
+rejeitada como ambígua. Quando o tipo da chave já é conhecido, use as fábricas explícitas `From(Cpf)`,
+`From(MobilePhone)`, `From(Cnpj)`, `From(Email)` ou `FromChaveAleatoria`.
+
 A validação não consulta DICT, bancos, Receita Federal, DNS, portabilidade telefônica ou contas bancárias.

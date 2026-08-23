@@ -8,6 +8,8 @@ namespace Brazilian.Primitives;
 /// <remarks>
 /// Validation is local and deterministic. A valid <see cref="ChavePix"/> does not prove that the key is registered,
 /// active, owned by a person, associated with an account, portable, claimable, or usable for a Pix transaction.
+/// Untyped parsing rejects values that match more than one supported key kind; use the explicit factory methods when
+/// the key kind is already known.
 /// </remarks>
 public readonly record struct ChavePix : IParsable<ChavePix>, ISpanParsable<ChavePix>
 {
@@ -103,7 +105,9 @@ public readonly record struct ChavePix : IParsable<ChavePix>, ISpanParsable<Chav
     /// </summary>
     /// <param name="value">The Pix key text.</param>
     /// <returns>A validated Pix key.</returns>
-    /// <exception cref="FormatException">Thrown when <paramref name="value"/> is not a supported Pix key.</exception>
+    /// <exception cref="FormatException">
+    /// Thrown when <paramref name="value"/> is not a supported Pix key or matches more than one supported key kind.
+    /// </exception>
     public static ChavePix Parse(string value)
     {
         return Parse(value, provider: null);
@@ -136,7 +140,10 @@ public readonly record struct ChavePix : IParsable<ChavePix>, ISpanParsable<Chav
     /// </summary>
     /// <param name="value">The Pix key text.</param>
     /// <param name="result">When successful, contains the Pix key.</param>
-    /// <returns><see langword="true"/> when the value is a supported Pix key; otherwise, <see langword="false"/>.</returns>
+    /// <returns>
+    /// <see langword="true"/> when the value matches exactly one supported Pix key kind; otherwise,
+    /// <see langword="false"/>.
+    /// </returns>
     public static bool TryParse(string? value, out ChavePix result)
     {
         return TryParse(value, provider: null, out result);
@@ -168,28 +175,43 @@ public readonly record struct ChavePix : IParsable<ChavePix>, ISpanParsable<Chav
             return false;
         }
 
+        int matchCount = 0;
+        ChavePix candidate = default;
+
         if (MobilePhone.TryParse(s, provider, out MobilePhone celular))
         {
-            result = From(celular);
-            return true;
+            candidate = From(celular);
+            matchCount++;
         }
 
         if (TryNormalizeChaveAleatoria(s, out string chaveAleatoria))
         {
-            result = new ChavePix(chaveAleatoria, TipoChavePix.Aleatoria);
-            return true;
+            candidate = new ChavePix(chaveAleatoria, TipoChavePix.Aleatoria);
+            matchCount++;
         }
 
         bool isCpf = Cpf.TryParse(s, provider, out Cpf cpf);
         bool isCnpj = Cnpj.TryParse(s, provider, out Cnpj cnpj);
 
-        if (isCpf == isCnpj)
+        if (isCpf)
+        {
+            candidate = From(cpf);
+            matchCount++;
+        }
+
+        if (isCnpj)
+        {
+            candidate = From(cnpj);
+            matchCount++;
+        }
+
+        if (matchCount != 1)
         {
             result = default;
             return false;
         }
 
-        result = isCpf ? From(cpf) : From(cnpj);
+        result = candidate;
         return true;
     }
 
@@ -197,7 +219,7 @@ public readonly record struct ChavePix : IParsable<ChavePix>, ISpanParsable<Chav
     /// Determines whether the supplied text can be represented as a supported Pix key.
     /// </summary>
     /// <param name="value">The Pix key text.</param>
-    /// <returns><see langword="true"/> when the value is a supported Pix key.</returns>
+    /// <returns><see langword="true"/> when the value matches exactly one supported Pix key kind.</returns>
     public static bool IsValid(string? value)
     {
         return TryParse(value, out _);

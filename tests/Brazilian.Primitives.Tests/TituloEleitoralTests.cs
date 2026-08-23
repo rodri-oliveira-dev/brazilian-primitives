@@ -63,6 +63,28 @@ public sealed class TituloEleitoralTests
     }
 
     [Theory]
+    [InlineData("000000060116", BrazilianState.SaoPaulo)]
+    [InlineData("000000060213", BrazilianState.MinasGerais)]
+    public void ParseAppliesSaoPauloAndMinasGeraisFirstCheckDigitException(string value, BrazilianState expectedState)
+    {
+        TituloEleitoral titulo = TituloEleitoral.Parse(value, CultureInfo.InvariantCulture);
+
+        Assert.Equal(value, titulo.Value);
+        Assert.True(titulo.TryGetState(out BrazilianState state));
+        Assert.Equal(expectedState, state);
+    }
+
+    [Fact]
+    public void ParseKeepsDefaultRemainderTenMappingForOtherOrigins()
+    {
+        TituloEleitoral titulo = TituloEleitoral.Parse("000000060302", CultureInfo.InvariantCulture);
+
+        Assert.Equal("03", titulo.CodigoOrigem);
+        Assert.True(titulo.TryGetState(out BrazilianState state));
+        Assert.Equal(BrazilianState.RioDeJaneiro, state);
+    }
+
+    [Theory]
     [InlineData("000123450059")]
     [InlineData("000123452952")]
     [InlineData("000123450150")]
