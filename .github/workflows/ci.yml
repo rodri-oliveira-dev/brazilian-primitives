@@ -242,7 +242,7 @@ jobs:
           cat > "$consumer/Program.cs" <<'EOF'
           using Brazilian.Primitives;
 
-          _ = new Class1();
+          _ = Cpf.Parse("529.982.247-25");
           Console.WriteLine("Brazilian.Primitives package consumed successfully.");
           EOF
 

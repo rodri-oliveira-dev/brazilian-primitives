@@ -44,6 +44,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- Reorganized public documentation into maintained English and Brazilian Portuguese entry points, getting-started
+  guides, design notes, and per-primitive references aligned with the implemented value objects.
+- Replaced the placeholder NuGet package description with a consumer-facing description of the implemented library.
+- Removed the template placeholder `Class1` public type from the production assembly and package consumption check.
 - Hardened GitHub Actions permissions to job scope where applicable and pinned `NuGet/login` to the immutable v1.2.0 commit SHA used by the release workflow.
 - Hardened all eligible GitHub Actions references with immutable commit SHAs and disabled credential persistence on read-only checkouts.
 - Extended `.editorconfig` with production-scoped reliability/API-usage rules and low-noise performance rules while keeping `CA1859` as a suggestion.
