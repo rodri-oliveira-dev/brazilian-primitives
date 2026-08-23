@@ -72,13 +72,13 @@ jobs:
 
       - name: Restaurar dependências em locked mode
         if: ${{ env.SONAR_TOKEN != '' }}
-        run: dotnet restore Brazilian.Primitives.slnx --locked-mode
+        run: dotnet restore Brazilian.PrimitivesTypes.slnx --locked-mode
 
       - name: Resolver versão do projeto para Sonar
         if: ${{ env.SONAR_TOKEN != '' }}
         shell: bash
         run: |
-          project="src/Brazilian.Primitives/Brazilian.Primitives.csproj"
+          project="src/Brazilian.PrimitivesTypes/Brazilian.PrimitivesTypes.csproj"
           fallback_version="$(dotnet msbuild "$project" -nologo -getProperty:PackageVersion \
             | tr -d '\r' \
             | sed '/^[[:space:]]*$/d' \
@@ -101,29 +101,62 @@ jobs:
           echo "Sonar project version: $version ($version_source)"
           echo "SONAR_PROJECT_VERSION=$version" >> "$GITHUB_ENV"
 
+      - name: Resolver parametros adicionais do Sonar
+        if: ${{ env.SONAR_TOKEN != '' }}
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          base_sha=""
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            base_sha="$PR_BASE_SHA"
+          else
+            base_sha="$PUSH_BEFORE_SHA"
+          fi
+
+          if [ -z "$base_sha" ] || ! git cat-file -e "$base_sha^{commit}" 2>/dev/null; then
+            exit 0
+          fi
+
+          changed_paths="$(git diff --name-status "$base_sha" HEAD --)"
+          if echo "$changed_paths" | grep -Eq 'src/Brazilian\.Primitives/' \
+            && echo "$changed_paths" | grep -Eq 'src/Brazilian\.PrimitivesTypes/'; then
+            echo "SONAR_CPD_EXCLUSIONS=src/Brazilian.PrimitivesTypes/*.cs" >> "$GITHUB_ENV"
+            echo "Sonar CPD exclusions enabled for the one-time identity rename."
+          fi
+
       - name: Iniciar análise Sonar
         if: ${{ env.SONAR_TOKEN != '' }}
         shell: bash
-        run: >-
-          dotnet sonarscanner begin
-          /k:"$SONAR_PROJECT_KEY"
-          /o:"$SONAR_ORGANIZATION"
-          /v:"$SONAR_PROJECT_VERSION"
-          /d:sonar.host.url="$SONAR_HOST_URL"
-          /d:sonar.token="$SONAR_TOKEN"
-          /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover*.xml"
-          /d:sonar.exclusions="scripts/**"
-          /d:sonar.qualitygate.wait=true
-          /d:sonar.qualitygate.timeout=300
+        run: |
+          sonar_args=(
+            /k:"$SONAR_PROJECT_KEY"
+            /o:"$SONAR_ORGANIZATION"
+            /v:"$SONAR_PROJECT_VERSION"
+            /d:sonar.host.url="$SONAR_HOST_URL"
+            /d:sonar.token="$SONAR_TOKEN"
+            /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover*.xml"
+            /d:sonar.exclusions="scripts/**"
+            /d:sonar.qualitygate.wait=true
+            /d:sonar.qualitygate.timeout=300
+          )
+
+          if [ -n "${SONAR_CPD_EXCLUSIONS:-}" ]; then
+            sonar_args+=(/d:sonar.cpd.exclusions="$SONAR_CPD_EXCLUSIONS")
+          fi
+
+          dotnet sonarscanner begin "${sonar_args[@]}"
 
       - name: Compilar para análise
         if: ${{ env.SONAR_TOKEN != '' }}
-        run: dotnet build Brazilian.Primitives.slnx --configuration Release --no-restore --no-incremental
+        run: dotnet build Brazilian.PrimitivesTypes.slnx --configuration Release --no-restore --no-incremental
 
       - name: Executar testes e coletar cobertura OpenCover
         if: ${{ env.SONAR_TOKEN != '' }}
         run: >-
-          dotnet test Brazilian.Primitives.slnx
+          dotnet test Brazilian.PrimitivesTypes.slnx
           --configuration Release
           --no-build
           --coverlet

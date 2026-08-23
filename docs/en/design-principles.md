@@ -1,6 +1,6 @@
 # Design Principles
 
-Brazilian.Primitives favors predictable domain primitives over permissive string cleanup.
+Brazilian.PrimitivesTypes favors predictable domain primitives over permissive string cleanup.
 
 ## Value Object Contract
 

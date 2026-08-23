@@ -1,8 +1,8 @@
-# Brazilian.Primitives
+# Brazilian.PrimitivesTypes
 
 Idioma: Português do Brasil | [English](https://github.com/rodri-oliveira-dev/brazilian-primitives/blob/main/README.en.md)
 
-Brazilian.Primitives é uma biblioteca .NET para modelar identificadores brasileiros como value objects imutáveis.
+Brazilian.PrimitivesTypes é uma biblioteca .NET para modelar identificadores brasileiros como value objects imutáveis.
 
 Ela valida e normaliza valores como CPF, CNPJ, CEP, chaves Pix, telefones brasileiros, placas, RENAVAM, CNH, CNS, título
 eleitoral, inscrição estadual e identificadores bancários sem fazer chamadas externas.
@@ -10,7 +10,7 @@ eleitoral, inscrição estadual e identificadores bancários sem fazer chamadas 
 ## Instalação
 
 ```bash
-dotnet add package Brazilian.Primitives
+dotnet add package Brazilian.PrimitivesTypes
 ```
 
 O repositório atual usa .NET 10.
@@ -18,7 +18,7 @@ O repositório atual usa .NET 10.
 ## Exemplo Rápido
 
 ```csharp
-using Brazilian.Primitives;
+using Brazilian.PrimitivesTypes;
 
 Cpf cpf = Cpf.Parse("529.982.247-25");
 Cnpj cnpj = Cnpj.Parse("00.000.000/e08g-12");
@@ -79,15 +79,15 @@ Leia mais em [Princípios de design](docs/pt-BR/design-principles.md).
 ```bash
 dotnet tool restore
 dotnet restore --locked-mode
-dotnet format Brazilian.Primitives.slnx --verify-no-changes --no-restore
-dotnet build Brazilian.Primitives.slnx --configuration Release --no-restore
-dotnet test Brazilian.Primitives.slnx --configuration Release --no-build
+dotnet format Brazilian.PrimitivesTypes.slnx --verify-no-changes --no-restore
+dotnet build Brazilian.PrimitivesTypes.slnx --configuration Release --no-restore
+dotnet test Brazilian.PrimitivesTypes.slnx --configuration Release --no-build
 ```
 
 Validação de pacote:
 
 ```bash
-dotnet pack src/Brazilian.Primitives/Brazilian.Primitives.csproj --configuration Release --no-build --output artifacts/packages
+dotnet pack src/Brazilian.PrimitivesTypes/Brazilian.PrimitivesTypes.csproj --configuration Release --no-build --output artifacts/packages
 dotnet run --file scripts/verify-package.cs -- artifacts/packages
 ```
 

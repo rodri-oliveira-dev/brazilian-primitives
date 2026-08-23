@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Brazilian.PrimitivesTypes/Brazilian.PrimitivesTypes.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Brazilian.PrimitivesTypes.Tests/Brazilian.PrimitivesTypes.Tests.csproj" />
+  </Folder>
+</Solution>

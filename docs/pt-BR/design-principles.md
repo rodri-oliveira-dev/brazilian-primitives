@@ -1,6 +1,6 @@
 # Princípios de Design
 
-Brazilian.Primitives privilegia primitivos de domínio previsíveis em vez de limpeza permissiva de strings.
+Brazilian.PrimitivesTypes privilegia primitivos de domínio previsíveis em vez de limpeza permissiva de strings.
 
 ## Contrato de Value Object
 

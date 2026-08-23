@@ -3,13 +3,13 @@
 Instale o pacote:
 
 ```bash
-dotnet add package Brazilian.Primitives
+dotnet add package Brazilian.PrimitivesTypes
 ```
 
 Importe o namespace e faça o parsing nas bordas da aplicação:
 
 ```csharp
-using Brazilian.Primitives;
+using Brazilian.PrimitivesTypes;
 
 if (!Cpf.TryParse(input, out Cpf cpf))
 {
