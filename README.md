@@ -105,6 +105,16 @@ Console.WriteLine(pis.Value); // 12044529868
 
 See [the PIS/PASEP documentation](docs/pis-pasep.md) for the DV algorithm and NIT/NIS boundary.
 
+Titulo Eleitoral uses the canonical 12-digit representation and exposes the origin code, including Exterior:
+
+```csharp
+TituloEleitoral titulo = TituloEleitoral.Parse("000123450159");
+
+Console.WriteLine(titulo.CodigoOrigem); // 01
+```
+
+See [the Titulo Eleitoral documentation](docs/titulo-eleitoral.md) for origin-code mapping and DV rules.
+
 Legacy RG validation requires the issuing federative unit explicitly because there is no single national RG format or check-digit algorithm:
 
 ```csharp
