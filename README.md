@@ -63,6 +63,17 @@ Console.WriteLine(placa.Padrao);    // NacionalAnterior
 
 See [the vehicle plate documentation](docs/placa-veiculo.md) for sequence patterns and non-inferred visual metadata.
 
+State tax registrations require explicit UF context:
+
+```csharp
+InscricaoEstadual ie = InscricaoEstadual.Parse("110042490114", BrazilianState.SaoPaulo);
+
+Console.WriteLine(ie.Value); // 110042490114
+Console.WriteLine(ie.State); // SaoPaulo
+```
+
+See [the Inscricao Estadual documentation](docs/inscricao-estadual.md) for the 27-UF matrix and format-only status.
+
 Legacy RG validation requires the issuing federative unit explicitly because there is no single national RG format or check-digit algorithm:
 
 ```csharp
