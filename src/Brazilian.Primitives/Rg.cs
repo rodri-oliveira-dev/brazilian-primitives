@@ -13,7 +13,8 @@ namespace Brazilian.Primitives;
 public readonly record struct Rg
 {
     private const int SaoPauloCanonicalLength = 9;
-    private const int RioStyleCanonicalLength = 8;
+    private const int RioDeJaneiroCanonicalLength = 9;
+    private const int MinasGeraisCanonicalLength = 8;
     private const int SantaCatarinaCanonicalLength = 9;
 
     private readonly string? _value;
@@ -114,7 +115,8 @@ public readonly record struct Rg
         bool parsed = rule.MaskKind switch
         {
             RgMaskKind.SaoPaulo => TryNormalizeSaoPaulo(input, out normalized),
-            RgMaskKind.RioStyle => TryNormalizeRioStyle(input, rule.AllowsMPrefix, out normalized),
+            RgMaskKind.RioDeJaneiro => TryNormalizeRioDeJaneiro(input, out normalized),
+            RgMaskKind.MinasGerais => TryNormalizeMinasGerais(input, out normalized),
             RgMaskKind.SantaCatarina => TryNormalizeSantaCatarina(input, out normalized),
             _ => TryNormalizeDigits(input, rule.CanonicalLength, out normalized),
         };
@@ -194,53 +196,101 @@ public readonly record struct Rg
         return targetIndex == SaoPauloCanonicalLength;
     }
 
-    private static bool TryNormalizeRioStyle(ReadOnlySpan<char> input, bool allowsMPrefix, out string normalized)
+    private static bool TryNormalizeRioDeJaneiro(ReadOnlySpan<char> input, out string normalized)
     {
-        bool prefixed = allowsMPrefix && input.Length > 0 && (input[0] is 'M' or 'm');
-        ReadOnlySpan<char> number = prefixed ? input[1..] : input;
-        Span<char> canonical = stackalloc char[RioStyleCanonicalLength];
+        Span<char> canonical = stackalloc char[RioDeJaneiroCanonicalLength];
 
-        if (number.Length == RioStyleCanonicalLength)
+        if (input.Length == RioDeJaneiroCanonicalLength)
+        {
+            if (!TryCopyAsciiDigits(input, canonical))
+            {
+                normalized = string.Empty;
+                return false;
+            }
+
+            normalized = new string(canonical);
+            return true;
+        }
+
+        if (input.Length != 12 || input[2] != '.' || input[6] != '.' || input[10] != '-')
+        {
+            normalized = string.Empty;
+            return false;
+        }
+
+        int targetIndex = 0;
+        for (int sourceIndex = 0; sourceIndex < input.Length; sourceIndex++)
+        {
+            if (sourceIndex is 2 or 6 or 10)
+            {
+                continue;
+            }
+
+            if (!IsAsciiDigit(input[sourceIndex]))
+            {
+                normalized = string.Empty;
+                return false;
+            }
+
+            canonical[targetIndex++] = input[sourceIndex];
+        }
+
+        normalized = targetIndex == RioDeJaneiroCanonicalLength ? new string(canonical) : string.Empty;
+        return targetIndex == RioDeJaneiroCanonicalLength;
+    }
+
+    private static bool TryNormalizeMinasGerais(ReadOnlySpan<char> input, out string normalized)
+    {
+        ReadOnlySpan<char> number = input;
+
+        if (input.StartsWith("MG-", StringComparison.OrdinalIgnoreCase))
+        {
+            number = input[3..];
+        }
+        else if (input.StartsWith("M-", StringComparison.OrdinalIgnoreCase))
+        {
+            number = input[2..];
+        }
+
+        Span<char> canonical = stackalloc char[MinasGeraisCanonicalLength];
+
+        if (number.Length == MinasGeraisCanonicalLength)
         {
             if (!TryCopyAsciiDigits(number, canonical))
             {
                 normalized = string.Empty;
                 return false;
             }
+
+            normalized = new string(canonical);
+            return true;
         }
-        else if (number.Length == 11 && number[1] == '.' && number[5] == '.' && number[9] == '-')
-        {
-            int targetIndex = 0;
-            for (int sourceIndex = 0; sourceIndex < number.Length; sourceIndex++)
-            {
-                if (sourceIndex is 1 or 5 or 9)
-                {
-                    continue;
-                }
 
-                if (!IsAsciiDigit(number[sourceIndex]))
-                {
-                    normalized = string.Empty;
-                    return false;
-                }
-
-                canonical[targetIndex++] = number[sourceIndex];
-            }
-
-            if (targetIndex != RioStyleCanonicalLength)
-            {
-                normalized = string.Empty;
-                return false;
-            }
-        }
-        else
+        if (number.Length != 10 || number[2] != '.' || number[6] != '.')
         {
             normalized = string.Empty;
             return false;
         }
 
-        normalized = prefixed ? string.Concat("M", new string(canonical)) : new string(canonical);
-        return true;
+        int targetIndex = 0;
+        for (int sourceIndex = 0; sourceIndex < number.Length; sourceIndex++)
+        {
+            if (sourceIndex is 2 or 6)
+            {
+                continue;
+            }
+
+            if (!IsAsciiDigit(number[sourceIndex]))
+            {
+                normalized = string.Empty;
+                return false;
+            }
+
+            canonical[targetIndex++] = number[sourceIndex];
+        }
+
+        normalized = targetIndex == MinasGeraisCanonicalLength ? new string(canonical) : string.Empty;
+        return targetIndex == MinasGeraisCanonicalLength;
     }
 
     private static bool TryNormalizeSantaCatarina(ReadOnlySpan<char> input, out string normalized)
@@ -367,58 +417,87 @@ public readonly record struct Rg
     {
         return state switch
         {
-            BrazilianState.SaoPaulo => string.Create(12, value, static (destination, source) =>
-            {
-                destination[0] = source[0];
-                destination[1] = source[1];
-                destination[2] = '.';
-                destination[3] = source[2];
-                destination[4] = source[3];
-                destination[5] = source[4];
-                destination[6] = '.';
-                destination[7] = source[5];
-                destination[8] = source[6];
-                destination[9] = source[7];
-                destination[10] = '-';
-                destination[11] = source[8];
-            }),
-            BrazilianState.RioDeJaneiro => FormatRioStyle(value),
-            BrazilianState.MinasGerais => value[0] == 'M'
-                ? string.Concat("M", FormatRioStyle(value[1..]))
-                : FormatRioStyle(value),
-            BrazilianState.SantaCatarina => string.Create(11, value, static (destination, source) =>
-            {
-                destination[0] = source[0];
-                destination[1] = source[1];
-                destination[2] = source[2];
-                destination[3] = '.';
-                destination[4] = source[3];
-                destination[5] = source[4];
-                destination[6] = source[5];
-                destination[7] = '.';
-                destination[8] = source[6];
-                destination[9] = source[7];
-                destination[10] = source[8];
-            }),
+            BrazilianState.SaoPaulo => FormatSaoPaulo(value),
+            BrazilianState.RioDeJaneiro => FormatRioDeJaneiro(value),
+            BrazilianState.MinasGerais => FormatMinasGerais(value),
+            BrazilianState.SantaCatarina => FormatSantaCatarina(value),
             _ => value,
         };
     }
 
-    private static string FormatRioStyle(string value)
+    private static string FormatSaoPaulo(string value)
+    {
+        return string.Create(12, value, static (destination, source) =>
+        {
+            destination[0] = source[0];
+            destination[1] = source[1];
+            destination[2] = '.';
+            destination[3] = source[2];
+            destination[4] = source[3];
+            destination[5] = source[4];
+            destination[6] = '.';
+            destination[7] = source[5];
+            destination[8] = source[6];
+            destination[9] = source[7];
+            destination[10] = '-';
+            destination[11] = source[8];
+        });
+    }
+
+    private static string FormatRioDeJaneiro(string value)
+    {
+        return string.Create(12, value, static (destination, source) =>
+        {
+            destination[0] = source[0];
+            destination[1] = source[1];
+            destination[2] = '.';
+            destination[3] = source[2];
+            destination[4] = source[3];
+            destination[5] = source[4];
+            destination[6] = '.';
+            destination[7] = source[5];
+            destination[8] = source[6];
+            destination[9] = source[7];
+            destination[10] = '-';
+            destination[11] = source[8];
+        });
+    }
+
+    private static string FormatMinasGerais(string value)
+    {
+        return string.Create(13, value, static (destination, source) =>
+        {
+            destination[0] = 'M';
+            destination[1] = 'G';
+            destination[2] = '-';
+            destination[3] = source[0];
+            destination[4] = source[1];
+            destination[5] = '.';
+            destination[6] = source[2];
+            destination[7] = source[3];
+            destination[8] = source[4];
+            destination[9] = '.';
+            destination[10] = source[5];
+            destination[11] = source[6];
+            destination[12] = source[7];
+        });
+    }
+
+    private static string FormatSantaCatarina(string value)
     {
         return string.Create(11, value, static (destination, source) =>
         {
             destination[0] = source[0];
-            destination[1] = '.';
-            destination[2] = source[1];
-            destination[3] = source[2];
+            destination[1] = source[1];
+            destination[2] = source[2];
+            destination[3] = '.';
             destination[4] = source[3];
-            destination[5] = '.';
-            destination[6] = source[4];
-            destination[7] = source[5];
+            destination[5] = source[4];
+            destination[6] = source[5];
+            destination[7] = '.';
             destination[8] = source[6];
-            destination[9] = '-';
-            destination[10] = source[7];
+            destination[9] = source[7];
+            destination[10] = source[8];
         });
     }
 
@@ -426,33 +505,33 @@ public readonly record struct Rg
     {
         rule = state switch
         {
-            BrazilianState.Acre => new RgStateRule(6, RgMaskKind.None, false, false),
-            BrazilianState.Alagoas => new RgStateRule(7, RgMaskKind.None, false, false),
-            BrazilianState.Amapa => new RgStateRule(9, RgMaskKind.None, false, false),
-            BrazilianState.Amazonas => new RgStateRule(9, RgMaskKind.None, false, false),
-            BrazilianState.Bahia => new RgStateRule(10, RgMaskKind.None, false, false),
-            BrazilianState.Ceara => new RgStateRule(9, RgMaskKind.None, false, false),
-            BrazilianState.DistritoFederal => new RgStateRule(7, RgMaskKind.None, false, false),
-            BrazilianState.EspiritoSanto => new RgStateRule(9, RgMaskKind.None, false, false),
-            BrazilianState.Goias => new RgStateRule(9, RgMaskKind.None, false, false),
-            BrazilianState.Maranhao => new RgStateRule(9, RgMaskKind.None, false, false),
-            BrazilianState.MatoGrosso => new RgStateRule(9, RgMaskKind.None, false, false),
-            BrazilianState.MatoGrossoDoSul => new RgStateRule(9, RgMaskKind.None, false, false),
-            BrazilianState.MinasGerais => new RgStateRule(8, RgMaskKind.RioStyle, false, true),
-            BrazilianState.Para => new RgStateRule(9, RgMaskKind.None, false, false),
-            BrazilianState.Paraiba => new RgStateRule(9, RgMaskKind.None, false, false),
-            BrazilianState.Parana => new RgStateRule(8, RgMaskKind.None, false, false),
-            BrazilianState.Pernambuco => new RgStateRule(9, RgMaskKind.None, false, false),
-            BrazilianState.Piaui => new RgStateRule(9, RgMaskKind.None, false, false),
-            BrazilianState.RioDeJaneiro => new RgStateRule(8, RgMaskKind.RioStyle, false, false),
-            BrazilianState.RioGrandeDoNorte => new RgStateRule(9, RgMaskKind.None, false, false),
-            BrazilianState.RioGrandeDoSul => new RgStateRule(10, RgMaskKind.None, false, false),
-            BrazilianState.Rondonia => new RgStateRule(9, RgMaskKind.None, false, false),
-            BrazilianState.Roraima => new RgStateRule(9, RgMaskKind.None, false, false),
-            BrazilianState.SantaCatarina => new RgStateRule(9, RgMaskKind.SantaCatarina, false, false),
-            BrazilianState.SaoPaulo => new RgStateRule(9, RgMaskKind.SaoPaulo, true, false),
-            BrazilianState.Sergipe => new RgStateRule(9, RgMaskKind.None, false, false),
-            BrazilianState.Tocantins => new RgStateRule(9, RgMaskKind.None, false, false),
+            BrazilianState.Acre => new RgStateRule(6, RgMaskKind.None, false),
+            BrazilianState.Alagoas => new RgStateRule(7, RgMaskKind.None, false),
+            BrazilianState.Amapa => new RgStateRule(9, RgMaskKind.None, false),
+            BrazilianState.Amazonas => new RgStateRule(9, RgMaskKind.None, false),
+            BrazilianState.Bahia => new RgStateRule(10, RgMaskKind.None, false),
+            BrazilianState.Ceara => new RgStateRule(9, RgMaskKind.None, false),
+            BrazilianState.DistritoFederal => new RgStateRule(7, RgMaskKind.None, false),
+            BrazilianState.EspiritoSanto => new RgStateRule(9, RgMaskKind.None, false),
+            BrazilianState.Goias => new RgStateRule(9, RgMaskKind.None, false),
+            BrazilianState.Maranhao => new RgStateRule(9, RgMaskKind.None, false),
+            BrazilianState.MatoGrosso => new RgStateRule(9, RgMaskKind.None, false),
+            BrazilianState.MatoGrossoDoSul => new RgStateRule(9, RgMaskKind.None, false),
+            BrazilianState.MinasGerais => new RgStateRule(8, RgMaskKind.MinasGerais, false),
+            BrazilianState.Para => new RgStateRule(9, RgMaskKind.None, false),
+            BrazilianState.Paraiba => new RgStateRule(9, RgMaskKind.None, false),
+            BrazilianState.Parana => new RgStateRule(8, RgMaskKind.None, false),
+            BrazilianState.Pernambuco => new RgStateRule(9, RgMaskKind.None, false),
+            BrazilianState.Piaui => new RgStateRule(9, RgMaskKind.None, false),
+            BrazilianState.RioDeJaneiro => new RgStateRule(9, RgMaskKind.RioDeJaneiro, false),
+            BrazilianState.RioGrandeDoNorte => new RgStateRule(9, RgMaskKind.None, false),
+            BrazilianState.RioGrandeDoSul => new RgStateRule(10, RgMaskKind.None, false),
+            BrazilianState.Rondonia => new RgStateRule(9, RgMaskKind.None, false),
+            BrazilianState.Roraima => new RgStateRule(9, RgMaskKind.None, false),
+            BrazilianState.SantaCatarina => new RgStateRule(9, RgMaskKind.SantaCatarina, false),
+            BrazilianState.SaoPaulo => new RgStateRule(9, RgMaskKind.SaoPaulo, true),
+            BrazilianState.Sergipe => new RgStateRule(9, RgMaskKind.None, false),
+            BrazilianState.Tocantins => new RgStateRule(9, RgMaskKind.None, false),
             _ => default,
         };
 
@@ -463,13 +542,13 @@ public readonly record struct Rg
     {
         None,
         SaoPaulo,
-        RioStyle,
+        RioDeJaneiro,
+        MinasGerais,
         SantaCatarina,
     }
 
     private readonly record struct RgStateRule(
         int CanonicalLength,
         RgMaskKind MaskKind,
-        bool ValidateSaoPauloCheckDigit,
-        bool AllowsMPrefix);
+        bool ValidateSaoPauloCheckDigit);
 }
