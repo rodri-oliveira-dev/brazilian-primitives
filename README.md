@@ -30,6 +30,17 @@ Console.WriteLine(documento.Formatted); // 529.982.247-25
 
 See [the CPF/CNPJ documentation](docs/cpf-cnpj.md) for the union semantics and alphanumeric CNPJ behavior.
 
+Pix keys are represented by `ChavePix`, with explicit type discrimination and canonical Pix values:
+
+```csharp
+ChavePix chave = ChavePix.Parse("(11) 98765-4321");
+
+Console.WriteLine(chave.Tipo);  // Celular
+Console.WriteLine(chave.Value); // +5511987654321
+```
+
+See [the Pix key documentation](docs/chave-pix.md) for CPF, CNPJ, mobile phone, email, and random EVP boundaries.
+
 Legacy RG validation requires the issuing federative unit explicitly because there is no single national RG format or check-digit algorithm:
 
 ```csharp

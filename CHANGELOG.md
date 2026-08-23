@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- `ChavePix` value object and `TipoChavePix` discriminator for CPF, CNPJ, mobile phone, email, and random EVP Pix keys, reusing existing primitives and applying Pix-specific canonicalization without external DICT lookup.
 - `CpfCnpj` value object and `TipoCpfCnpj` discriminator for fields that accept either CPF or CNPJ, delegating validation, canonicalization, formatting, equality, and alphanumeric CNPJ support to the existing primitives.
 - `Email` value object with strict ASCII dot-atom local-part validation, IDN domain normalization to lowercase Punycode, conservative case semantics, syntax-only validation, and `IParsable`/`ISpanParsable` support.
 - `Cep` value object with strict eight-ASCII-digit and canonical `00000-000` parsing, leading-zero preservation, canonical formatting, structural-only validation semantics, and `IParsable`/`ISpanParsable`/`IFormattable` support without runtime CEP lookup.
