@@ -105,34 +105,66 @@ jobs:
         shell: bash
         run: dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
 
-      - name: Diagnosticar Quality Gate da main
+      - name: Diagnosticar métricas Sonar da main
         if: ${{ always() && env.SONAR_TOKEN != '' }}
         shell: bash
         run: |
-          analyses="$(curl --fail --silent --show-error --user "$SONAR_TOKEN:" \
-            "$SONAR_HOST_URL/api/project_analyses/search?project=$SONAR_PROJECT_KEY&branch=main&ps=1")"
-          analysis_id="$(echo "$analyses" | jq -r '.analyses[0].key // empty')"
+          echo "Quality Gate associado:"
+          curl --silent --show-error --user "$SONAR_TOKEN:" \
+            --get "$SONAR_HOST_URL/api/qualitygates/get_by_project" \
+            --data-urlencode "project=$SONAR_PROJECT_KEY" \
+            | jq '{qualityGate}' || true
 
-          if [ -z "$analysis_id" ]; then
-            echo "Nenhuma análise da main encontrada para diagnóstico."
-            exit 1
-          fi
+          metrics="$(curl --fail --silent --show-error --user "$SONAR_TOKEN:" \
+            "$SONAR_HOST_URL/api/metrics/search?ps=500")"
 
-          echo "Sonar main analysis id: $analysis_id"
+          metric_keys="$(echo "$metrics" | jq -r '[
+            .metrics[].key
+            | select(
+                . == "coverage"
+                or . == "duplicated_lines_density"
+                or . == "reliability_rating"
+                or . == "security_rating"
+                or . == "sqale_rating"
+                or . == "security_hotspots_reviewed"
+                or . == "new_coverage"
+                or . == "new_duplicated_lines_density"
+                or . == "new_reliability_rating"
+                or . == "new_security_rating"
+                or . == "new_maintainability_rating"
+                or . == "new_security_hotspots_reviewed"
+              )
+          ] | join(",")')"
 
-          response="$(curl --fail --silent --show-error --user "$SONAR_TOKEN:" \
-            "$SONAR_HOST_URL/api/qualitygates/project_status?analysisId=$analysis_id")"
+          echo "Métricas disponíveis para diagnóstico: $metric_keys"
 
-          echo "$response" | jq '{
-            status: .projectStatus.status,
-            conditions: [
-              .projectStatus.conditions[]
+          measures="$(curl --fail --silent --show-error --user "$SONAR_TOKEN:" \
+            --get "$SONAR_HOST_URL/api/measures/component" \
+            --data-urlencode "component=$SONAR_PROJECT_KEY" \
+            --data-urlencode "branch=main" \
+            --data-urlencode "metricKeys=$metric_keys")"
+
+          echo "$measures" | jq '{
+            component: .component.key,
+            measures: [
+              .component.measures[]
               | {
-                  status,
-                  metricKey,
-                  comparator,
-                  errorThreshold,
-                  actualValue
+                  metric,
+                  value,
+                  period
                 }
             ]
+          }'
+
+          issues="$(curl --fail --silent --show-error --user "$SONAR_TOKEN:" \
+            --get "$SONAR_HOST_URL/api/issues/search" \
+            --data-urlencode "componentKeys=$SONAR_PROJECT_KEY" \
+            --data-urlencode "branch=main" \
+            --data-urlencode "resolved=false" \
+            --data-urlencode "ps=1" \
+            --data-urlencode "facets=types,severities")"
+
+          echo "$issues" | jq '{
+            openIssues: .total,
+            facets: .facets
           }'
