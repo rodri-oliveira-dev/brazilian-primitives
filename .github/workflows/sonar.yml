@@ -84,6 +84,8 @@ jobs:
           /d:sonar.host.url="$SONAR_HOST_URL"
           /d:sonar.token="$SONAR_TOKEN"
           /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover*.xml"
+          /d:sonar.qualitygate.wait=true
+          /d:sonar.qualitygate.timeout=300
 
       - name: Compilar para análise
         if: ${{ env.SONAR_TOKEN != '' }}
