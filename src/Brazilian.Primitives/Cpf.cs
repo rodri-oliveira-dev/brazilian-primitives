@@ -43,20 +43,20 @@ public readonly record struct Cpf : IParsable<Cpf>, ISpanParsable<Cpf>, IFormatt
     }
 
     /// <inheritdoc />
-    public static Cpf Parse(string value, IFormatProvider? provider)
+    public static Cpf Parse(string s, IFormatProvider? provider)
     {
-        if (value is null)
+        if (s is null)
         {
             throw new FormatException("CPF must be provided in a supported format.");
         }
 
-        return Parse(value.AsSpan(), provider);
+        return Parse(s.AsSpan(), provider);
     }
 
     /// <inheritdoc />
-    public static Cpf Parse(ReadOnlySpan<char> value, IFormatProvider? provider)
+    public static Cpf Parse(ReadOnlySpan<char> s, IFormatProvider? provider)
     {
-        if (!TryNormalize(value, out string normalized))
+        if (!TryNormalize(s, out string normalized))
         {
             throw new FormatException("CPF must contain 11 valid digits, optionally using the canonical 000.000.000-00 mask.");
         }
@@ -76,21 +76,21 @@ public readonly record struct Cpf : IParsable<Cpf>, ISpanParsable<Cpf>, IFormatt
     }
 
     /// <inheritdoc />
-    public static bool TryParse([NotNullWhen(true)] string? value, IFormatProvider? provider, out Cpf result)
+    public static bool TryParse([NotNullWhen(true)] string? s, IFormatProvider? provider, out Cpf result)
     {
-        if (value is null)
+        if (s is null)
         {
             result = default;
             return false;
         }
 
-        return TryParse(value.AsSpan(), provider, out result);
+        return TryParse(s.AsSpan(), provider, out result);
     }
 
     /// <inheritdoc />
-    public static bool TryParse(ReadOnlySpan<char> value, IFormatProvider? provider, out Cpf result)
+    public static bool TryParse(ReadOnlySpan<char> s, IFormatProvider? provider, out Cpf result)
     {
-        if (TryNormalize(value, out string normalized))
+        if (TryNormalize(s, out string normalized))
         {
             result = new Cpf(normalized);
             return true;
