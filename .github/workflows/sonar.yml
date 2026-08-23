@@ -105,15 +105,38 @@ jobs:
         shell: bash
         run: dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
 
-      - name: Diagnosticar métricas Sonar da main
+      - name: Diagnosticar configuração Sonar da main
         if: ${{ always() && env.SONAR_TOKEN != '' }}
         shell: bash
         run: |
-          echo "Quality Gate associado:"
+          echo "New Code Definition:"
           curl --silent --show-error --user "$SONAR_TOKEN:" \
-            --get "$SONAR_HOST_URL/api/qualitygates/get_by_project" \
+            --get "$SONAR_HOST_URL/api/new_code_periods/show" \
             --data-urlencode "project=$SONAR_PROJECT_KEY" \
-            | jq '{qualityGate}' || true
+            --data-urlencode "branch=main" \
+            | jq '.' || true
+
+          echo "Configurações de New Code específicas do projeto:"
+          curl --silent --show-error --user "$SONAR_TOKEN:" \
+            --get "$SONAR_HOST_URL/api/settings/values" \
+            --data-urlencode "component=$SONAR_PROJECT_KEY" \
+            | jq '[.settings[] | select(.key | contains("leak.period"))]' || true
+
+          echo "Quality Gates da organização:"
+          gates="$(curl --fail --silent --show-error --user "$SONAR_TOKEN:" \
+            --get "$SONAR_HOST_URL/api/qualitygates/list" \
+            --data-urlencode "organization=$SONAR_ORGANIZATION")"
+          echo "$gates" | jq '[.qualitygates[] | {id, name, isDefault, isBuiltIn}]'
+
+          default_gate_id="$(echo "$gates" | jq -r '.qualitygates[] | select(.isDefault == true) | .id' | head -n 1)"
+          if [ -n "$default_gate_id" ]; then
+            echo "Condições do Quality Gate padrão:"
+            curl --fail --silent --show-error --user "$SONAR_TOKEN:" \
+              --get "$SONAR_HOST_URL/api/qualitygates/show" \
+              --data-urlencode "id=$default_gate_id" \
+              --data-urlencode "organization=$SONAR_ORGANIZATION" \
+              | jq '{name, conditions}'
+          fi
 
           metrics="$(curl --fail --silent --show-error --user "$SONAR_TOKEN:" \
             "$SONAR_HOST_URL/api/metrics/search?ps=500")"
@@ -136,14 +159,13 @@ jobs:
               )
           ] | join(",")')"
 
-          echo "Métricas disponíveis para diagnóstico: $metric_keys"
-
           measures="$(curl --fail --silent --show-error --user "$SONAR_TOKEN:" \
             --get "$SONAR_HOST_URL/api/measures/component" \
             --data-urlencode "component=$SONAR_PROJECT_KEY" \
             --data-urlencode "branch=main" \
             --data-urlencode "metricKeys=$metric_keys")"
 
+          echo "Métricas da main:"
           echo "$measures" | jq '{
             component: .component.key,
             measures: [
@@ -164,6 +186,7 @@ jobs:
             --data-urlencode "ps=1" \
             --data-urlencode "facets=types,severities")"
 
+          echo "Issues abertas da main:"
           echo "$issues" | jq '{
             openIssues: .total,
             facets: .facets
