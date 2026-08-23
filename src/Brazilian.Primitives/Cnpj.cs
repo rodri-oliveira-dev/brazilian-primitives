@@ -6,10 +6,10 @@ namespace Brazilian.Primitives;
 /// Represents a structurally and mathematically valid Brazilian Cadastro Nacional da Pessoa Jurídica (CNPJ) number.
 /// </summary>
 /// <remarks>
-/// This version supports the traditional numeric CNPJ representation. The canonical value is stored as text so the
-/// public contract can evolve to support the alphanumeric CNPJ format without changing the value object's identity.
-/// Validation is local and deterministic. A valid <see cref="Cnpj"/> does not prove that the registration exists,
-/// is active at Receita Federal, belongs to a specific legal entity, or has a particular cadastral status.
+/// Since 2026, numeric and alphanumeric CNPJ representations coexist. The first 12 canonical positions may contain
+/// ASCII digits or letters, while the final two verification digits remain numeric. Validation is local and
+/// deterministic. A valid <see cref="Cnpj"/> does not prove that the registration exists, is active at Receita
+/// Federal, belongs to a specific legal entity, or has a particular cadastral status.
 /// </remarks>
 public readonly record struct Cnpj : IParsable<Cnpj>, ISpanParsable<Cnpj>, IFormattable
 {
@@ -25,21 +25,21 @@ public readonly record struct Cnpj : IParsable<Cnpj>, ISpanParsable<Cnpj>, IForm
     }
 
     /// <summary>
-    /// Gets the canonical 14-character CNPJ representation without a mask.
+    /// Gets the canonical 14-character CNPJ representation without a mask and with uppercase letters.
     /// </summary>
     public string Value => _value ?? throw new InvalidOperationException("A default CNPJ instance does not contain a valid value.");
 
     /// <summary>
-    /// Gets the CNPJ formatted with the canonical <c>00.000.000/0000-00</c> mask.
+    /// Gets the CNPJ formatted with the canonical <c>AA.AAA.AAA/AAAA-00</c> mask.
     /// </summary>
     public string Formatted => Format(Value);
 
     /// <summary>
-    /// Parses an unmasked or canonically masked numeric CNPJ.
+    /// Parses an unmasked or canonically masked numeric or alphanumeric CNPJ.
     /// </summary>
-    /// <param name="value">The CNPJ in <c>00000000000000</c> or <c>00.000.000/0000-00</c> format.</param>
+    /// <param name="value">The CNPJ using 14 canonical characters or the canonical <c>AA.AAA.AAA/AAAA-00</c> mask.</param>
     /// <returns>A validated CNPJ value object.</returns>
-    /// <exception cref="FormatException">Thrown when <paramref name="value"/> is not a valid numeric CNPJ.</exception>
+    /// <exception cref="FormatException">Thrown when <paramref name="value"/> is not a valid CNPJ.</exception>
     public static Cnpj Parse(string value)
     {
         return Parse(value, provider: null);
@@ -61,18 +61,18 @@ public readonly record struct Cnpj : IParsable<Cnpj>, ISpanParsable<Cnpj>, IForm
     {
         if (!TryNormalize(s, out string normalized))
         {
-            throw new FormatException("CNPJ must contain 14 valid numeric characters, optionally using the canonical 00.000.000/0000-00 mask.");
+            throw new FormatException("CNPJ must contain 12 ASCII letters or digits followed by 2 numeric verification digits, optionally using the canonical mask.");
         }
 
         return new Cnpj(normalized);
     }
 
     /// <summary>
-    /// Attempts to parse an unmasked or canonically masked numeric CNPJ.
+    /// Attempts to parse an unmasked or canonically masked numeric or alphanumeric CNPJ.
     /// </summary>
-    /// <param name="value">The CNPJ in <c>00000000000000</c> or <c>00.000.000/0000-00</c> format.</param>
+    /// <param name="value">The CNPJ using 14 canonical characters or the canonical <c>AA.AAA.AAA/AAAA-00</c> mask.</param>
     /// <param name="result">When this method returns <see langword="true"/>, contains the validated CNPJ.</param>
-    /// <returns><see langword="true"/> when the value is a valid numeric CNPJ; otherwise, <see langword="false"/>.</returns>
+    /// <returns><see langword="true"/> when the value is a valid CNPJ; otherwise, <see langword="false"/>.</returns>
     public static bool TryParse(string? value, out Cnpj result)
     {
         return TryParse(value, provider: null, out result);
@@ -104,10 +104,10 @@ public readonly record struct Cnpj : IParsable<Cnpj>, ISpanParsable<Cnpj>, IForm
     }
 
     /// <summary>
-    /// Determines whether the supplied text has a supported numeric CNPJ representation and valid verification digits.
+    /// Determines whether the supplied text has a supported CNPJ representation and valid verification digits.
     /// </summary>
     /// <param name="value">The CNPJ text to validate.</param>
-    /// <returns><see langword="true"/> when the text represents a structurally and mathematically valid numeric CNPJ.</returns>
+    /// <returns><see langword="true"/> when the text represents a structurally and mathematically valid CNPJ.</returns>
     public static bool IsValid(string? value)
     {
         return TryParse(value, out _);
@@ -164,13 +164,10 @@ public readonly record struct Cnpj : IParsable<Cnpj>, ISpanParsable<Cnpj>, IForm
         {
             for (int index = 0; index < CanonicalLength; index++)
             {
-                char character = input[index];
-                if (!IsAsciiDigit(character))
+                if (!TryNormalizeCanonicalCharacter(input[index], index, out canonical[index]))
                 {
                     return false;
                 }
-
-                canonical[index] = character;
             }
 
             return true;
@@ -189,16 +186,45 @@ public readonly record struct Cnpj : IParsable<Cnpj>, ISpanParsable<Cnpj>, IForm
                 continue;
             }
 
-            char character = input[sourceIndex];
-            if (!IsAsciiDigit(character))
+            if (!TryNormalizeCanonicalCharacter(input[sourceIndex], targetIndex, out canonical[targetIndex]))
             {
                 return false;
             }
 
-            canonical[targetIndex++] = character;
+            targetIndex++;
         }
 
         return targetIndex == CanonicalLength;
+    }
+
+    private static bool TryNormalizeCanonicalCharacter(char value, int index, out char normalized)
+    {
+        if (index >= BaseLength)
+        {
+            if (IsAsciiDigit(value))
+            {
+                normalized = value;
+                return true;
+            }
+
+            normalized = default;
+            return false;
+        }
+
+        if (IsAsciiDigit(value) || IsAsciiUpperLetter(value))
+        {
+            normalized = value;
+            return true;
+        }
+
+        if (IsAsciiLowerLetter(value))
+        {
+            normalized = (char)(value - ('a' - 'A'));
+            return true;
+        }
+
+        normalized = default;
+        return false;
     }
 
     private static bool HasRepeatedCharacters(ReadOnlySpan<char> value)
@@ -233,16 +259,32 @@ public readonly record struct Cnpj : IParsable<Cnpj>, ISpanParsable<Cnpj>, IForm
         for (int index = 0; index < value.Length; index++)
         {
             int weight = ((value.Length - index - 1) % 8) + 2;
-            sum += (value[index] - '0') * weight;
+            sum += GetVerificationValue(value[index]) * weight;
         }
 
         int remainder = sum % 11;
         return remainder < 2 ? 0 : 11 - remainder;
     }
 
+    private static int GetVerificationValue(char value)
+    {
+        // Receita Federal defines the value as the uppercase ASCII code minus 48.
+        return value - '0';
+    }
+
     private static bool IsAsciiDigit(char value)
     {
         return (uint)(value - '0') <= 9;
+    }
+
+    private static bool IsAsciiUpperLetter(char value)
+    {
+        return (uint)(value - 'A') <= 'Z' - 'A';
+    }
+
+    private static bool IsAsciiLowerLetter(char value)
+    {
+        return (uint)(value - 'a') <= 'z' - 'a';
     }
 
     private static string Format(string value)
