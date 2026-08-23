@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- `TelefoneBrasileiro` value object and `TipoTelefoneBrasileiro` discriminator for fields that accept either fixed-line or mobile Brazilian numbers, delegating parsing, formatting, E.164 representation, and numbering-plan validation to `LandlinePhone` and `MobilePhone`.
 - `InscricaoEstadual` value object with mandatory `BrazilianState` context, explicit 27-UF structural strategy matrix, `ISENTO` rejection, state-aware equality, and documented format-only validation where no UF checksum is embedded.
 - `PlacaVeiculo` value object and `PadraoPlacaVeiculo` discriminator for previous national and Mercosur/PIV plate sequence patterns, with ASCII uppercase canonicalization, previous-pattern formatting, and optional algorithmic previous-to-Mercosur sequence conversion.
 - `Renavam` value object with strict current 11-digit parsing, leading-zero preservation, modulo-11 check-digit validation, structural-only semantics, and `IParsable`/`ISpanParsable` support.

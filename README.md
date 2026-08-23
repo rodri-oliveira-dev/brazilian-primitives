@@ -74,6 +74,17 @@ Console.WriteLine(ie.State); // SaoPaulo
 
 See [the Inscricao Estadual documentation](docs/inscricao-estadual.md) for the 27-UF matrix and format-only status.
 
+Fields that accept either fixed-line or mobile Brazilian numbers can use `TelefoneBrasileiro`:
+
+```csharp
+TelefoneBrasileiro telefone = TelefoneBrasileiro.Parse("+55 11 98765-4321");
+
+Console.WriteLine(telefone.Tipo); // Celular
+Console.WriteLine(telefone.E164); // +5511987654321
+```
+
+See [the Brazilian phone documentation](docs/telefone-brasileiro.md) for wrapper semantics and delegated formatting.
+
 Legacy RG validation requires the issuing federative unit explicitly because there is no single national RG format or check-digit algorithm:
 
 ```csharp
