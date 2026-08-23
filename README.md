@@ -125,6 +125,16 @@ Console.WriteLine(cns.Value); // 123456789010000
 
 See [the CNS documentation](docs/cns.md) for family algorithms and CADSUS boundaries.
 
+ISPB is represented as an 8-digit structural identifier, separate from CNPJ and COMPE:
+
+```csharp
+Ispb ispb = Ispb.Parse("12345678");
+
+Console.WriteLine(ispb.Value); // 12345678
+```
+
+See [the ISPB documentation](docs/ispb.md) for Banco Central boundaries and structural-only semantics.
+
 Legacy RG validation requires the issuing federative unit explicitly because there is no single national RG format or check-digit algorithm:
 
 ```csharp
