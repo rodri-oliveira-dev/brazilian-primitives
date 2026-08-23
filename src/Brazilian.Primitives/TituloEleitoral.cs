@@ -7,8 +7,9 @@ namespace Brazilian.Primitives;
 /// </summary>
 /// <remarks>
 /// Validation is structural and mathematical according to the supported 12-digit canonical representation:
-/// eight sequential digits, two origin digits, and two modulo-11 check digits. A valid <see cref="TituloEleitoral"/>
-/// does not prove current electoral regularity, discharge, domicile, polling section, biometric status, or ownership.
+/// eight sequential digits, two origin digits, and two modulo-11 check digits, including the first-check-digit
+/// remainder-10 exception for Sao Paulo and Minas Gerais origin codes. A valid <see cref="TituloEleitoral"/> does not
+/// prove current electoral regularity, discharge, domicile, polling section, biometric status, or ownership.
 /// </remarks>
 public readonly record struct TituloEleitoral : IParsable<TituloEleitoral>, ISpanParsable<TituloEleitoral>
 {
@@ -170,17 +171,18 @@ public readonly record struct TituloEleitoral : IParsable<TituloEleitoral>, ISpa
 
     private static bool HasValidCheckDigits(ReadOnlySpan<char> digits)
     {
-        int firstCheckDigit = CalculateFirstCheckDigit(digits[..SequentialLength]);
+        ReadOnlySpan<char> origin = digits.Slice(8, 2);
+        int firstCheckDigit = CalculateFirstCheckDigit(digits[..SequentialLength], origin);
         if (digits[10] - '0' != firstCheckDigit)
         {
             return false;
         }
 
-        int secondCheckDigit = CalculateSecondCheckDigit(digits.Slice(8, 2), firstCheckDigit);
+        int secondCheckDigit = CalculateSecondCheckDigit(origin, firstCheckDigit);
         return digits[11] - '0' == secondCheckDigit;
     }
 
-    private static int CalculateFirstCheckDigit(ReadOnlySpan<char> sequential)
+    private static int CalculateFirstCheckDigit(ReadOnlySpan<char> sequential, ReadOnlySpan<char> origin)
     {
         int sum = 0;
         for (int index = 0; index < SequentialLength; index++)
@@ -189,7 +191,12 @@ public readonly record struct TituloEleitoral : IParsable<TituloEleitoral>, ISpa
         }
 
         int checkDigit = sum % 11;
-        return checkDigit == 10 ? 0 : checkDigit;
+        if (checkDigit != 10)
+        {
+            return checkDigit;
+        }
+
+        return IsSaoPauloOrMinasGerais(origin) ? 1 : 0;
     }
 
     private static int CalculateSecondCheckDigit(ReadOnlySpan<char> origin, int firstCheckDigit)
@@ -203,6 +210,11 @@ public readonly record struct TituloEleitoral : IParsable<TituloEleitoral>, ISpa
     {
         int value = ((origin[0] - '0') * 10) + (origin[1] - '0');
         return value is >= 1 and <= 28;
+    }
+
+    private static bool IsSaoPauloOrMinasGerais(ReadOnlySpan<char> origin)
+    {
+        return origin is "01" or "02";
     }
 
     private static bool TryGetState(ReadOnlySpan<char> origin, out BrazilianState state)

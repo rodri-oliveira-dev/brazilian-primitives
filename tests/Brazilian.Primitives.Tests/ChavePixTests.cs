@@ -43,6 +43,32 @@ public sealed class ChavePixTests
         Assert.Equal("+5511987654321", chave.Value);
     }
 
+    [Fact]
+    public void TryParseRejectsAmbiguousCpfAndMobilePhoneKey()
+    {
+        const string value = "11900000083";
+
+        Assert.True(Cpf.IsValid(value));
+        Assert.True(MobilePhone.IsValid(value));
+        Assert.False(ChavePix.TryParse(value, out ChavePix result));
+        Assert.Equal(default, result);
+        Assert.Throws<FormatException>(() => ChavePix.Parse(value, CultureInfo.InvariantCulture));
+    }
+
+    [Fact]
+    public void FactoriesAllowExplicitAmbiguousCpfAndMobilePhoneKeys()
+    {
+        const string value = "11900000083";
+
+        ChavePix cpf = ChavePix.From(Cpf.Parse(value, CultureInfo.InvariantCulture));
+        ChavePix celular = ChavePix.From(MobilePhone.Parse(value, CultureInfo.InvariantCulture));
+
+        Assert.Equal(TipoChavePix.Cpf, cpf.Tipo);
+        Assert.Equal(value, cpf.Value);
+        Assert.Equal(TipoChavePix.Celular, celular.Tipo);
+        Assert.Equal("+5511900000083", celular.Value);
+    }
+
     [Theory]
     [InlineData("User@Example.COM", "user@example.com")]
     [InlineData("usuario@domínio.com", "usuario@xn--domnio-5va.com")]

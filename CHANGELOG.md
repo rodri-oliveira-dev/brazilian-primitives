@@ -44,6 +44,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- Reorganized public documentation into maintained English and Brazilian Portuguese entry points, getting-started
+  guides, design notes, and per-primitive references aligned with the implemented value objects.
+- Moved the Brazilian Portuguese README content into `README.md` with an English-language selector at the top.
+- `ChavePix` untyped parsing now rejects ambiguous values that match more than one supported key kind, while explicit
+  factory methods remain available when the key kind is known.
+- `TituloEleitoral` check-digit validation now applies the Sao Paulo and Minas Gerais first-check-digit remainder-10
+  exception.
+- Replaced the placeholder NuGet package description with a consumer-facing description of the implemented library.
+- Removed the template placeholder `Class1` public type from the production assembly and package consumption check.
 - Hardened GitHub Actions permissions to job scope where applicable and pinned `NuGet/login` to the immutable v1.2.0 commit SHA used by the release workflow.
 - Hardened all eligible GitHub Actions references with immutable commit SHAs and disabled credential persistence on read-only checkouts.
 - Extended `.editorconfig` with production-scoped reliability/API-usage rules and low-noise performance rules while keeping `CA1859` as a suggestion.
