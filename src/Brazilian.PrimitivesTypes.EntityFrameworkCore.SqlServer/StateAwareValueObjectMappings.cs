@@ -131,6 +131,7 @@ internal static class StateAwareSqlServerComplexMapping
         string valueColumnType,
         string? valueColumnName,
         string? stateColumnName)
+        where TComplex : notnull
     {
         ArgumentNullException.ThrowIfNull(builder);
 
