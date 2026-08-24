@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Brazilian.PrimitivesTypes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -85,31 +86,13 @@ public static class RgStateAwareSqlServerMapping
         string? valueColumnName = null,
         string? stateColumnName = null)
     {
-        ArgumentNullException.ThrowIfNull(builder);
-
-        ComplexTypePropertyBuilder<string> valueProperty = builder.Property(value => value.Value)
-            .HasColumnType("varchar(10)")
-            .IsRequired();
-        ApplyColumnName(valueProperty, valueColumnName);
-
-        ComplexTypePropertyBuilder<BrazilianState> stateProperty = builder.Property(value => value.State)
-            .HasConversion(new BrazilianStateCodeValueConverter())
-            .HasColumnType("varchar(2)")
-            .IsRequired();
-        ApplyColumnName(stateProperty, stateColumnName);
-    }
-
-    private static void ApplyColumnName<TProperty>(
-        ComplexTypePropertyBuilder<TProperty> propertyBuilder,
-        string? columnName)
-    {
-        if (columnName is null)
-        {
-            return;
-        }
-
-        ArgumentException.ThrowIfNullOrWhiteSpace(columnName);
-        propertyBuilder.HasColumnName(columnName);
+        StateAwareSqlServerComplexMapping.Configure(
+            builder,
+            value => value.Value,
+            value => value.State,
+            "varchar(10)",
+            valueColumnName,
+            stateColumnName);
     }
 }
 
@@ -129,14 +112,34 @@ public static class InscricaoEstadualStateAwareSqlServerMapping
         string? valueColumnName = null,
         string? stateColumnName = null)
     {
+        StateAwareSqlServerComplexMapping.Configure(
+            builder,
+            value => value.Value,
+            value => value.State,
+            "varchar(14)",
+            valueColumnName,
+            stateColumnName);
+    }
+}
+
+internal static class StateAwareSqlServerComplexMapping
+{
+    public static void Configure<TComplex>(
+        ComplexPropertyBuilder<TComplex> builder,
+        Expression<Func<TComplex, string>> valueExpression,
+        Expression<Func<TComplex, BrazilianState>> stateExpression,
+        string valueColumnType,
+        string? valueColumnName,
+        string? stateColumnName)
+    {
         ArgumentNullException.ThrowIfNull(builder);
 
-        ComplexTypePropertyBuilder<string> valueProperty = builder.Property(value => value.Value)
-            .HasColumnType("varchar(14)")
+        ComplexTypePropertyBuilder<string> valueProperty = builder.Property(valueExpression)
+            .HasColumnType(valueColumnType)
             .IsRequired();
         ApplyColumnName(valueProperty, valueColumnName);
 
-        ComplexTypePropertyBuilder<BrazilianState> stateProperty = builder.Property(value => value.State)
+        ComplexTypePropertyBuilder<BrazilianState> stateProperty = builder.Property(stateExpression)
             .HasConversion(new BrazilianStateCodeValueConverter())
             .HasColumnType("varchar(2)")
             .IsRequired();
