@@ -193,6 +193,8 @@ public sealed class ScalarPrimitiveSqlServerTests
             {
                 entity.ToTable("ScalarPrimitiveRecords");
                 entity.HasKey(record => record.Id);
+                entity.Property(record => record.Id)
+                    .ValueGeneratedNever();
                 entity.Property(record => record.Cpf)
                     .HasConversion(new CpfValueConverter());
                 entity.Property(record => record.Cnpj)
@@ -237,6 +239,8 @@ public sealed class ScalarPrimitiveSqlServerTests
             {
                 entity.ToTable("EmailRecords");
                 entity.HasKey(record => record.Id);
+                entity.Property(record => record.Id)
+                    .ValueGeneratedNever();
                 entity.Property(record => record.Email)
                     .HasConversion(new EmailValueConverter());
             });
