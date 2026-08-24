@@ -179,10 +179,13 @@ public sealed class ConventionAndFluentMappingSqlServerTests
             Assert.Null(actual.OptionalInscricaoEstadual);
 
             IEntityType entityType = context.Model.FindEntityType(typeof(ContextFreeStateRecord))!;
-            Assert.Equal("varchar(10)", entityType.FindProperty(nameof(ContextFreeStateRecord.Rg))!
-                .GetRelationalTypeMapping().StoreType);
-            Assert.Equal("varchar(14)", entityType.FindProperty(nameof(ContextFreeStateRecord.InscricaoEstadual))!
-                .GetRelationalTypeMapping().StoreType);
+            Assert.Equal(
+                "varchar(10)",
+                entityType.FindProperty(nameof(ContextFreeStateRecord.Rg))!.GetRelationalTypeMapping().StoreType);
+            Assert.Equal(
+                "varchar(14)",
+                entityType.FindProperty(nameof(ContextFreeStateRecord.InscricaoEstadual))!
+                    .GetRelationalTypeMapping().StoreType);
             Assert.Null(entityType.FindComplexProperty(nameof(ContextFreeStateRecord.Rg)));
             Assert.Null(entityType.FindComplexProperty(nameof(ContextFreeStateRecord.InscricaoEstadual)));
         }
@@ -231,8 +234,9 @@ public sealed class ConventionAndFluentMappingSqlServerTests
             IComplexProperty rg = entityType.FindComplexProperty(nameof(StateAwareFluentRecord.Rg))!;
             Assert.Equal("RgNumber", rg.ComplexType.FindProperty(nameof(Rg.Value))!.GetColumnName());
             Assert.Equal("RgUf", rg.ComplexType.FindProperty(nameof(Rg.State))!.GetColumnName());
-            Assert.Equal("varchar(12)", rg.ComplexType.FindProperty(nameof(Rg.Value))!
-                .GetRelationalTypeMapping().StoreType);
+            Assert.Equal(
+                "varchar(12)",
+                rg.ComplexType.FindProperty(nameof(Rg.Value))!.GetRelationalTypeMapping().StoreType);
             Assert.Empty(entityType.GetIndexes());
         }
         finally
@@ -249,7 +253,9 @@ public sealed class ConventionAndFluentMappingSqlServerTests
             .Options;
     }
 
-    private static void AssertEquivalentMappingMetadata(ConventionDbContext conventionContext, ExplicitDbContext explicitContext)
+    private static void AssertEquivalentMappingMetadata(
+        ConventionDbContext conventionContext,
+        ExplicitDbContext explicitContext)
     {
         IEntityType conventionType = conventionContext.Model.FindEntityType(typeof(MappingRecord))!;
         IEntityType explicitType = explicitContext.Model.FindEntityType(typeof(MappingRecord))!;
@@ -378,93 +384,241 @@ public sealed class ConventionAndFluentMappingSqlServerTests
 
     private interface IRecordWithId
     {
-        int Id { get; set; }
+        int Id
+        {
+            get;
+            set;
+        }
     }
 
     private sealed class MappingRecord : IRecordWithId
     {
-        public int Id { get; set; }
+        public int Id
+        {
+            get;
+            set;
+        }
 
-        public Cpf Cpf { get; set; }
+        public Cpf Cpf
+        {
+            get;
+            set;
+        }
 
-        public Email? Email { get; set; }
+        public Email? Email
+        {
+            get;
+            set;
+        }
 
-        public Cep Cep { get; set; }
+        public Cep Cep
+        {
+            get;
+            set;
+        }
     }
 
     private sealed class OverrideRecord : IRecordWithId
     {
-        public int Id { get; set; }
+        public int Id
+        {
+            get;
+            set;
+        }
 
-        public Email? Email { get; set; }
+        public Email? Email
+        {
+            get;
+            set;
+        }
     }
 
     private sealed class ContextFreeStateRecord : IRecordWithId
     {
-        public int Id { get; set; }
+        public int Id
+        {
+            get;
+            set;
+        }
 
-        public Rg Rg { get; set; }
+        public Rg Rg
+        {
+            get;
+            set;
+        }
 
-        public Rg? OptionalRg { get; set; }
+        public Rg? OptionalRg
+        {
+            get;
+            set;
+        }
 
-        public InscricaoEstadual InscricaoEstadual { get; set; }
+        public InscricaoEstadual InscricaoEstadual
+        {
+            get;
+            set;
+        }
 
-        public InscricaoEstadual? OptionalInscricaoEstadual { get; set; }
+        public InscricaoEstadual? OptionalInscricaoEstadual
+        {
+            get;
+            set;
+        }
     }
 
     private sealed class StateAwareFluentRecord : IRecordWithId
     {
-        public int Id { get; set; }
+        public int Id
+        {
+            get;
+            set;
+        }
 
-        public Rg Rg { get; set; }
+        public Rg Rg
+        {
+            get;
+            set;
+        }
 
-        public Rg? OptionalRg { get; set; }
+        public Rg? OptionalRg
+        {
+            get;
+            set;
+        }
 
-        public InscricaoEstadual InscricaoEstadual { get; set; }
+        public InscricaoEstadual InscricaoEstadual
+        {
+            get;
+            set;
+        }
 
-        public InscricaoEstadual? OptionalInscricaoEstadual { get; set; }
+        public InscricaoEstadual? OptionalInscricaoEstadual
+        {
+            get;
+            set;
+        }
     }
 
     private sealed class AllConventionRecord : IRecordWithId
     {
-        public int Id { get; set; }
+        public int Id
+        {
+            get;
+            set;
+        }
 
-        public Cpf Cpf { get; set; }
+        public Cpf Cpf
+        {
+            get;
+            set;
+        }
 
-        public Cnpj Cnpj { get; set; }
+        public Cnpj Cnpj
+        {
+            get;
+            set;
+        }
 
-        public CpfCnpj CpfCnpj { get; set; }
+        public CpfCnpj CpfCnpj
+        {
+            get;
+            set;
+        }
 
-        public Cep Cep { get; set; }
+        public Cep Cep
+        {
+            get;
+            set;
+        }
 
-        public Email Email { get; set; }
+        public Email Email
+        {
+            get;
+            set;
+        }
 
-        public Email? OptionalEmail { get; set; }
+        public Email? OptionalEmail
+        {
+            get;
+            set;
+        }
 
-        public MobilePhone MobilePhone { get; set; }
+        public MobilePhone MobilePhone
+        {
+            get;
+            set;
+        }
 
-        public LandlinePhone LandlinePhone { get; set; }
+        public LandlinePhone LandlinePhone
+        {
+            get;
+            set;
+        }
 
-        public TelefoneBrasileiro TelefoneBrasileiro { get; set; }
+        public TelefoneBrasileiro TelefoneBrasileiro
+        {
+            get;
+            set;
+        }
 
-        public ChavePix ChavePix { get; set; }
+        public ChavePix ChavePix
+        {
+            get;
+            set;
+        }
 
-        public Cnh Cnh { get; set; }
+        public Cnh Cnh
+        {
+            get;
+            set;
+        }
 
-        public Cns Cns { get; set; }
+        public Cns Cns
+        {
+            get;
+            set;
+        }
 
-        public TituloEleitoral TituloEleitoral { get; set; }
+        public TituloEleitoral TituloEleitoral
+        {
+            get;
+            set;
+        }
 
-        public Nit Nit { get; set; }
+        public Nit Nit
+        {
+            get;
+            set;
+        }
 
-        public PisPasep PisPasep { get; set; }
+        public PisPasep PisPasep
+        {
+            get;
+            set;
+        }
 
-        public PlacaVeiculo PlacaVeiculo { get; set; }
+        public PlacaVeiculo PlacaVeiculo
+        {
+            get;
+            set;
+        }
 
-        public Renavam Renavam { get; set; }
+        public Renavam Renavam
+        {
+            get;
+            set;
+        }
 
-        public Ispb Ispb { get; set; }
+        public Ispb Ispb
+        {
+            get;
+            set;
+        }
 
-        public CodigoCompe CodigoCompe { get; set; }
+        public CodigoCompe CodigoCompe
+        {
+            get;
+            set;
+        }
     }
 }
