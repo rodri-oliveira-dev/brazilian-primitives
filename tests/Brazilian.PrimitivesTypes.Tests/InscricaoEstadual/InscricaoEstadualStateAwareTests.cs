@@ -3,7 +3,7 @@ using Xunit;
 
 namespace Brazilian.PrimitivesTypes.Tests;
 
-public sealed class InscricaoEstadualTests
+public sealed class InscricaoEstadualStateAwareTests
 {
     public static TheoryData<BrazilianState, string> ValidCanonicalValues => new()
     {

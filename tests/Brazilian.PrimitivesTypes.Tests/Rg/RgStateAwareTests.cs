@@ -3,7 +3,7 @@ using Xunit;
 
 namespace Brazilian.PrimitivesTypes.Tests;
 
-public sealed class RgTests
+public sealed class RgStateAwareTests
 {
     [Theory]
     [InlineData(BrazilianState.Acre, "123456")]
