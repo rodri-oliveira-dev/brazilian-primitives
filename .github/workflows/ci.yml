@@ -201,18 +201,37 @@ jobs:
       - name: Coletar cobertura com Coverlet MTP
         run: dotnet test Brazilian.PrimitivesTypes.slnx --configuration Release --no-build --coverlet --coverlet-output-format cobertura
 
-      - name: Preparar artefato de cobertura
+      - name: Preparar artefatos de cobertura
         shell: bash
         run: |
-          coverage_file="$(find . -type f -name 'coverage.cobertura*.xml' -not -path './artifacts/*' -print -quit)"
+          mapfile -t coverage_files < <(
+            find . -type f -name 'coverage.cobertura*.xml' -not -path './artifacts/*' -print | sort
+          )
 
-          if [ -z "$coverage_file" ]; then
-            echo "Relatório Cobertura não foi produzido."
+          expected_coverage_count="$(
+            grep -R -l -F '<PackageReference Include="coverlet.MTP"' tests --include='*.csproj' \
+              | wc -l \
+              | tr -d ' '
+          )"
+
+          if [ "${#coverage_files[@]}" -eq 0 ]; then
+            echo "Nenhum relatório Cobertura foi produzido."
+            exit 1
+          fi
+
+          if [ "${#coverage_files[@]}" -lt "$expected_coverage_count" ]; then
+            echo "Relatórios Cobertura incompletos: esperados pelo menos $expected_coverage_count, encontrados ${#coverage_files[@]}."
+            printf 'Encontrado: %s\n' "${coverage_files[@]}"
             exit 1
           fi
 
           mkdir -p artifacts/coverage
-          cp "$coverage_file" artifacts/coverage/coverage.cobertura.xml
+
+          for index in "${!coverage_files[@]}"; do
+            destination="artifacts/coverage/coverage-$((index + 1)).cobertura.xml"
+            cp "${coverage_files[$index]}" "$destination"
+            echo "Cobertura incluída: ${coverage_files[$index]} -> $destination"
+          done
 
       - name: Empacotar bibliotecas
         run: |
@@ -279,7 +298,7 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: coverage
-          path: artifacts/coverage/coverage.cobertura.xml
+          path: artifacts/coverage/*.cobertura.xml
           if-no-files-found: error
           retention-days: 7
 
