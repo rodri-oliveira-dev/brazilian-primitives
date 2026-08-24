@@ -1,3 +1,4 @@
+using System.Globalization;
 using Brazilian.PrimitivesTypes;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
@@ -12,7 +13,7 @@ public sealed class CpfValueConverter : ValueConverter<Cpf, string>
     /// Initializes a new instance of the <see cref="CpfValueConverter"/> class.
     /// </summary>
     public CpfValueConverter()
-        : base(value => value.Value, value => Cpf.Parse(value), SqlServerValueConverterMappingHints.Ascii(11))
+        : base(value => value.Value, value => Cpf.Parse(value, CultureInfo.InvariantCulture), SqlServerValueConverterMappingHints.Ascii(11))
     {
     }
 }
@@ -26,7 +27,7 @@ public sealed class CnpjValueConverter : ValueConverter<Cnpj, string>
     /// Initializes a new instance of the <see cref="CnpjValueConverter"/> class.
     /// </summary>
     public CnpjValueConverter()
-        : base(value => value.Value, value => Cnpj.Parse(value), SqlServerValueConverterMappingHints.Ascii(14))
+        : base(value => value.Value, value => Cnpj.Parse(value, CultureInfo.InvariantCulture), SqlServerValueConverterMappingHints.Ascii(14))
     {
     }
 }
@@ -40,7 +41,7 @@ public sealed class CpfCnpjValueConverter : ValueConverter<CpfCnpj, string>
     /// Initializes a new instance of the <see cref="CpfCnpjValueConverter"/> class.
     /// </summary>
     public CpfCnpjValueConverter()
-        : base(value => value.Value, value => CpfCnpj.Parse(value), SqlServerValueConverterMappingHints.Ascii(14))
+        : base(value => value.Value, value => CpfCnpj.Parse(value, CultureInfo.InvariantCulture), SqlServerValueConverterMappingHints.Ascii(14))
     {
     }
 }
@@ -54,7 +55,7 @@ public sealed class CepValueConverter : ValueConverter<Cep, string>
     /// Initializes a new instance of the <see cref="CepValueConverter"/> class.
     /// </summary>
     public CepValueConverter()
-        : base(value => value.Value, value => Cep.Parse(value), SqlServerValueConverterMappingHints.Ascii(8))
+        : base(value => value.Value, value => Cep.Parse(value, CultureInfo.InvariantCulture), SqlServerValueConverterMappingHints.Ascii(8))
     {
     }
 }
@@ -68,7 +69,7 @@ public sealed class EmailValueConverter : ValueConverter<Email, string>
     /// Initializes a new instance of the <see cref="EmailValueConverter"/> class.
     /// </summary>
     public EmailValueConverter()
-        : base(value => value.Value, value => Email.Parse(value), SqlServerValueConverterMappingHints.Ascii(254))
+        : base(value => value.Value, value => Email.Parse(value, CultureInfo.InvariantCulture), SqlServerValueConverterMappingHints.Ascii(254))
     {
     }
 }
@@ -82,7 +83,7 @@ public sealed class MobilePhoneValueConverter : ValueConverter<MobilePhone, stri
     /// Initializes a new instance of the <see cref="MobilePhoneValueConverter"/> class.
     /// </summary>
     public MobilePhoneValueConverter()
-        : base(value => value.Value, value => MobilePhone.Parse(value), SqlServerValueConverterMappingHints.Ascii(11))
+        : base(value => value.Value, value => MobilePhone.Parse(value, CultureInfo.InvariantCulture), SqlServerValueConverterMappingHints.Ascii(11))
     {
     }
 }
@@ -96,7 +97,7 @@ public sealed class LandlinePhoneValueConverter : ValueConverter<LandlinePhone, 
     /// Initializes a new instance of the <see cref="LandlinePhoneValueConverter"/> class.
     /// </summary>
     public LandlinePhoneValueConverter()
-        : base(value => value.Value, value => LandlinePhone.Parse(value), SqlServerValueConverterMappingHints.Ascii(10))
+        : base(value => value.Value, value => LandlinePhone.Parse(value, CultureInfo.InvariantCulture), SqlServerValueConverterMappingHints.Ascii(10))
     {
     }
 }
@@ -110,7 +111,7 @@ public sealed class TelefoneBrasileiroValueConverter : ValueConverter<TelefoneBr
     /// Initializes a new instance of the <see cref="TelefoneBrasileiroValueConverter"/> class.
     /// </summary>
     public TelefoneBrasileiroValueConverter()
-        : base(value => value.Value, value => TelefoneBrasileiro.Parse(value), SqlServerValueConverterMappingHints.Ascii(11))
+        : base(value => value.Value, value => TelefoneBrasileiro.Parse(value, CultureInfo.InvariantCulture), SqlServerValueConverterMappingHints.Ascii(11))
     {
     }
 }
@@ -142,7 +143,7 @@ public sealed class CnhValueConverter : ValueConverter<Cnh, string>
     /// Initializes a new instance of the <see cref="CnhValueConverter"/> class.
     /// </summary>
     public CnhValueConverter()
-        : base(value => value.Value, value => Cnh.Parse(value), SqlServerValueConverterMappingHints.Ascii(11))
+        : base(value => value.Value, value => Cnh.Parse(value, CultureInfo.InvariantCulture), SqlServerValueConverterMappingHints.Ascii(11))
     {
     }
 }
@@ -156,7 +157,7 @@ public sealed class CnsValueConverter : ValueConverter<Cns, string>
     /// Initializes a new instance of the <see cref="CnsValueConverter"/> class.
     /// </summary>
     public CnsValueConverter()
-        : base(value => value.Value, value => Cns.Parse(value), SqlServerValueConverterMappingHints.Ascii(15))
+        : base(value => value.Value, value => Cns.Parse(value, CultureInfo.InvariantCulture), SqlServerValueConverterMappingHints.Ascii(15))
     {
     }
 }
@@ -170,7 +171,7 @@ public sealed class TituloEleitoralValueConverter : ValueConverter<TituloEleitor
     /// Initializes a new instance of the <see cref="TituloEleitoralValueConverter"/> class.
     /// </summary>
     public TituloEleitoralValueConverter()
-        : base(value => value.Value, value => TituloEleitoral.Parse(value), SqlServerValueConverterMappingHints.Ascii(12))
+        : base(value => value.Value, value => TituloEleitoral.Parse(value, CultureInfo.InvariantCulture), SqlServerValueConverterMappingHints.Ascii(12))
     {
     }
 }
@@ -184,7 +185,7 @@ public sealed class NitValueConverter : ValueConverter<Nit, string>
     /// Initializes a new instance of the <see cref="NitValueConverter"/> class.
     /// </summary>
     public NitValueConverter()
-        : base(value => value.Value, value => Nit.Parse(value), SqlServerValueConverterMappingHints.Ascii(11))
+        : base(value => value.Value, value => Nit.Parse(value, CultureInfo.InvariantCulture), SqlServerValueConverterMappingHints.Ascii(11))
     {
     }
 }
@@ -198,7 +199,7 @@ public sealed class PisPasepValueConverter : ValueConverter<PisPasep, string>
     /// Initializes a new instance of the <see cref="PisPasepValueConverter"/> class.
     /// </summary>
     public PisPasepValueConverter()
-        : base(value => value.Value, value => PisPasep.Parse(value), SqlServerValueConverterMappingHints.Ascii(11))
+        : base(value => value.Value, value => PisPasep.Parse(value, CultureInfo.InvariantCulture), SqlServerValueConverterMappingHints.Ascii(11))
     {
     }
 }
@@ -212,7 +213,7 @@ public sealed class PlacaVeiculoValueConverter : ValueConverter<PlacaVeiculo, st
     /// Initializes a new instance of the <see cref="PlacaVeiculoValueConverter"/> class.
     /// </summary>
     public PlacaVeiculoValueConverter()
-        : base(value => value.Value, value => PlacaVeiculo.Parse(value), SqlServerValueConverterMappingHints.Ascii(7))
+        : base(value => value.Value, value => PlacaVeiculo.Parse(value, CultureInfo.InvariantCulture), SqlServerValueConverterMappingHints.Ascii(7))
     {
     }
 }
@@ -226,7 +227,7 @@ public sealed class RenavamValueConverter : ValueConverter<Renavam, string>
     /// Initializes a new instance of the <see cref="RenavamValueConverter"/> class.
     /// </summary>
     public RenavamValueConverter()
-        : base(value => value.Value, value => Renavam.Parse(value), SqlServerValueConverterMappingHints.Ascii(11))
+        : base(value => value.Value, value => Renavam.Parse(value, CultureInfo.InvariantCulture), SqlServerValueConverterMappingHints.Ascii(11))
     {
     }
 }
@@ -240,7 +241,7 @@ public sealed class IspbValueConverter : ValueConverter<Ispb, string>
     /// Initializes a new instance of the <see cref="IspbValueConverter"/> class.
     /// </summary>
     public IspbValueConverter()
-        : base(value => value.Value, value => Ispb.Parse(value), SqlServerValueConverterMappingHints.Ascii(8))
+        : base(value => value.Value, value => Ispb.Parse(value, CultureInfo.InvariantCulture), SqlServerValueConverterMappingHints.Ascii(8))
     {
     }
 }
@@ -254,7 +255,7 @@ public sealed class CodigoCompeValueConverter : ValueConverter<CodigoCompe, stri
     /// Initializes a new instance of the <see cref="CodigoCompeValueConverter"/> class.
     /// </summary>
     public CodigoCompeValueConverter()
-        : base(value => value.Value, value => CodigoCompe.Parse(value), SqlServerValueConverterMappingHints.Ascii(3))
+        : base(value => value.Value, value => CodigoCompe.Parse(value, CultureInfo.InvariantCulture), SqlServerValueConverterMappingHints.Ascii(3))
     {
     }
 }
@@ -272,22 +273,22 @@ internal static class ChavePixCanonicalValueParser
 
         if (value.StartsWith("+55", StringComparison.Ordinal))
         {
-            return ChavePix.From(MobilePhone.Parse(value));
+            return ChavePix.From(MobilePhone.Parse(value, CultureInfo.InvariantCulture));
         }
 
         if (value.Contains('@'))
         {
-            return ChavePix.From(Email.Parse(value));
+            return ChavePix.From(Email.Parse(value, CultureInfo.InvariantCulture));
         }
 
         if (value.Length == 11)
         {
-            return ChavePix.From(Cpf.Parse(value));
+            return ChavePix.From(Cpf.Parse(value, CultureInfo.InvariantCulture));
         }
 
         if (value.Length == 14)
         {
-            return ChavePix.From(Cnpj.Parse(value));
+            return ChavePix.From(Cnpj.Parse(value, CultureInfo.InvariantCulture));
         }
 
         if (value.Length == 36)
