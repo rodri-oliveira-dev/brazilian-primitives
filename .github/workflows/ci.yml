@@ -214,11 +214,15 @@ jobs:
           mkdir -p artifacts/coverage
           cp "$coverage_file" artifacts/coverage/coverage.cobertura.xml
 
-      - name: Empacotar biblioteca
-        run: dotnet pack src/Brazilian.PrimitivesTypes/Brazilian.PrimitivesTypes.csproj --configuration Release --no-build --output artifacts/packages
+      - name: Empacotar bibliotecas
+        run: |
+          dotnet pack src/Brazilian.PrimitivesTypes/Brazilian.PrimitivesTypes.csproj --configuration Release --no-build --output artifacts/packages
+          dotnet pack src/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer.csproj --configuration Release --no-build --output artifacts/packages
 
-      - name: Validar pacote, símbolos e Source Link
-        run: dotnet run --file scripts/verify-package.cs -- artifacts/packages --require-source-link
+      - name: Validar pacotes, símbolos e Source Link
+        run: |
+          dotnet run --file scripts/verify-package.cs -- artifacts/packages --package-id Brazilian.PrimitivesTypes --require-source-link
+          dotnet run --file scripts/verify-package.cs -- artifacts/packages --package-id Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer --expected-dependency Brazilian.PrimitivesTypes --require-source-link
 
       - name: Validar consumo do pacote local
         shell: bash
