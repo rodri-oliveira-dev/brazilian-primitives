@@ -90,26 +90,25 @@ public static class RgStateAwareSqlServerMapping
         ComplexTypePropertyBuilder<string> valueProperty = builder.Property(value => value.Value)
             .HasColumnType("varchar(10)")
             .IsRequired();
-        ApplyColumnName(valueProperty, valueColumnName, nameof(valueColumnName));
+        ApplyColumnName(valueProperty, valueColumnName);
 
         ComplexTypePropertyBuilder<BrazilianState> stateProperty = builder.Property(value => value.State)
             .HasConversion(new BrazilianStateCodeValueConverter())
             .HasColumnType("varchar(2)")
             .IsRequired();
-        ApplyColumnName(stateProperty, stateColumnName, nameof(stateColumnName));
+        ApplyColumnName(stateProperty, stateColumnName);
     }
 
     private static void ApplyColumnName<TProperty>(
         ComplexTypePropertyBuilder<TProperty> propertyBuilder,
-        string? columnName,
-        string parameterName)
+        string? columnName)
     {
         if (columnName is null)
         {
             return;
         }
 
-        ArgumentException.ThrowIfNullOrWhiteSpace(columnName, parameterName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(columnName);
         propertyBuilder.HasColumnName(columnName);
     }
 }
@@ -135,26 +134,25 @@ public static class InscricaoEstadualStateAwareSqlServerMapping
         ComplexTypePropertyBuilder<string> valueProperty = builder.Property(value => value.Value)
             .HasColumnType("varchar(14)")
             .IsRequired();
-        ApplyColumnName(valueProperty, valueColumnName, nameof(valueColumnName));
+        ApplyColumnName(valueProperty, valueColumnName);
 
         ComplexTypePropertyBuilder<BrazilianState> stateProperty = builder.Property(value => value.State)
             .HasConversion(new BrazilianStateCodeValueConverter())
             .HasColumnType("varchar(2)")
             .IsRequired();
-        ApplyColumnName(stateProperty, stateColumnName, nameof(stateColumnName));
+        ApplyColumnName(stateProperty, stateColumnName);
     }
 
     private static void ApplyColumnName<TProperty>(
         ComplexTypePropertyBuilder<TProperty> propertyBuilder,
-        string? columnName,
-        string parameterName)
+        string? columnName)
     {
         if (columnName is null)
         {
             return;
         }
 
-        ArgumentException.ThrowIfNullOrWhiteSpace(columnName, parameterName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(columnName);
         propertyBuilder.HasColumnName(columnName);
     }
 }
