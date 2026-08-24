@@ -35,7 +35,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Primary GitHub Actions CI workflow with locked restore, Release build, tests, Cobertura coverage, NuGet packaging, package validation, and downloadable coverage/package artifacts.
 - CodeQL security analysis for C# on pull requests, pushes to `main`, and a weekly scheduled scan using a reproducible manual .NET build.
 - Dependency Review on pull requests to block newly introduced dependencies with high or critical known vulnerabilities.
-- Release workflow with SemVer validation, NuGet.org Trusted Publishing through GitHub OIDC, symbol publishing, GitHub Release creation, and a package-identity guard that prevents publishing the source template placeholder while still allowing source-template GitHub Releases without package artifacts.
+- Release workflow with SemVer validation, NuGet.org Trusted Publishing through GitHub OIDC, GitHub Packages publication through the workflow-scoped `GITHUB_TOKEN`, symbol publishing, GitHub Release creation, and a package-identity guard that prevents publishing the source template placeholder while still allowing source-template GitHub Releases without package artifacts.
 - Manual release flow through `workflow_dispatch` that validates `main`, rejects existing tags, builds/tests/packs/validates the package, and only then creates the requested Git tag at the exact validated commit SHA.
 - Portable VS Code recommendations, workspace settings, and tasks for restore, build, test, coverage, and NuGet packaging.
 - Maintenance-only GitHub repository administration baseline covering template status, Actions permissions, `main` ruleset checks, security features, and final v1.0 verification.
@@ -69,5 +69,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Extended `.editorconfig` with production-scoped reliability/API-usage rules and low-noise performance rules while keeping `CA1859` as a suggestion.
 - NuGet.org publication is explicitly opt-in through the `NUGET_USER` repository variable; when it is absent, empty, or whitespace-only, the release still creates its tag and GitHub Release without starting OIDC authentication or `dotnet nuget push`.
 - GitHub Release creation is now independent from NuGet enablement; when NuGet publication is enabled, the GitHub Release still waits for a successful NuGet publication before it is created.
+- NuGet package metadata now explicitly declares the MIT license expression and canonical GitHub repository URL for both distributable packages.
 - README quick-start guidance now shows the full clone/install/generate flow, optional `-o` output usage, unambiguous uninstall commands, and the automated GitHub Template initialization path in Portuguese and English.
 - GitHub Template initialization now uses a dedicated `INITIALIZE_REPOSITORY_TOKEN` secret with workflow-write permission for the self-removing push, while keeping the workflow `GITHUB_TOKEN` read-only.
