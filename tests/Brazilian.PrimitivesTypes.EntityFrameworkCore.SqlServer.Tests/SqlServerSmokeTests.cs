@@ -19,6 +19,7 @@ public sealed class SqlServerSmokeTests
     [Fact]
     public async Task EfCoreCanCreateAndUseSqlServerDatabase()
     {
+        CancellationToken cancellationToken = TestContext.Current.CancellationToken;
         string connectionString = _fixture.GetConnectionString(SmokeDatabaseName);
         DbContextOptions<SmokeDbContext> options = new DbContextOptionsBuilder<SmokeDbContext>()
             .UseSqlServer(connectionString)
@@ -28,25 +29,24 @@ public sealed class SqlServerSmokeTests
 
         try
         {
-            await context.Database.EnsureDeletedAsync().ConfigureAwait(false);
-            bool created = await context.Database.EnsureCreatedAsync().ConfigureAwait(false);
+            await context.Database.EnsureDeletedAsync(cancellationToken);
+            bool created = await context.Database.EnsureCreatedAsync(cancellationToken);
 
             Assert.True(created);
 
             context.Records.Add(new SmokeRecord { Value = "sql-server-ready" });
-            await context.SaveChangesAsync().ConfigureAwait(false);
+            await context.SaveChangesAsync(cancellationToken);
 
             string persistedValue = await context.Records
                 .AsNoTracking()
                 .Select(record => record.Value)
-                .SingleAsync()
-                .ConfigureAwait(false);
+                .SingleAsync(cancellationToken);
 
             Assert.Equal("sql-server-ready", persistedValue);
         }
         finally
         {
-            await context.Database.EnsureDeletedAsync().ConfigureAwait(false);
+            await context.Database.EnsureDeletedAsync(cancellationToken);
         }
     }
 
@@ -70,8 +70,16 @@ public sealed class SqlServerSmokeTests
 
     private sealed class SmokeRecord
     {
-        public int Id { get; set; }
+        public int Id
+        {
+            get;
+            set;
+        }
 
-        public string Value { get; set; } = string.Empty;
+        public string Value
+        {
+            get;
+            set;
+        } = string.Empty;
     }
 }
