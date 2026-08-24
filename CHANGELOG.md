@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - `Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer` project/package boundary for optional Entity Framework Core SQL Server integration, with provider-specific naming, isolated dependency direction, Central Package Management, and locked restore support.
+- SQL Server integration test foundation in `Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer.Tests`, using `Testcontainers.MsSql`, a pinned SQL Server 2022 container image, shared xUnit fixture lifecycle, dynamic connection strings, and a real EF Core relational smoke test.
 - `CodigoCompe` value object with strict current 3-ASCII-digit structural parsing, leading-zero preservation, `999` sentinel rejection, no ISPB/CNPJ fallback, and `IParsable`/`ISpanParsable` support.
 - `Ispb` value object with strict 8-ASCII-digit structural parsing, leading-zero preservation, no CNPJ derivation, no invented checksum, and `IParsable`/`ISpanParsable` support.
 - `Cns` value object with strict 15-ASCII-digit parsing, official family support for prefixes `1`, `2`, `7`, `8`, and `9`, mathematical validation, and `IParsable`/`ISpanParsable` support.
@@ -18,7 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `TelefoneBrasileiro` value object and `TipoTelefoneBrasileiro` discriminator for fields that accept either fixed-line or mobile Brazilian numbers, delegating parsing, formatting, E.164 representation, and numbering-plan validation to `LandlinePhone` and `MobilePhone`.
 - `InscricaoEstadual` value object with mandatory `BrazilianState` context, explicit 27-UF structural strategy matrix, `ISENTO` rejection, state-aware equality, and documented format-only validation where no UF checksum is embedded.
 - `PlacaVeiculo` value object and `PadraoPlacaVeiculo` discriminator for previous national and Mercosur/PIV plate sequence patterns, with ASCII uppercase canonicalization, previous-pattern formatting, and optional algorithmic previous-to-Mercosur sequence conversion.
-- `Renavam` value object with strict current 11-digit parsing, leading-zero preservation, modulo-11 check-digit validation, structural-only semantics, and `IParsable`/`ISpanParsable` support.
+- `Renavam` value object with strict current 11-digit parsing, leading-zero preservation, modulo-11 check-digit validation, structural-only semantics, `IParsable`/`ISpanParsable` support.
 - `ChavePix` value object and `TipoChavePix` discriminator for CPF, CNPJ, mobile phone, email, and random EVP Pix keys, reusing existing primitives and applying Pix-specific canonicalization without external DICT lookup.
 - `CpfCnpj` value object and `TipoCpfCnpj` discriminator for fields that accept either CPF or CNPJ, delegating validation, canonicalization, formatting, equality, and alphanumeric CNPJ support to the existing primitives.
 - `Email` value object with strict ASCII dot-atom local-part validation, IDN domain normalization to lowercase Punycode, conservative case semantics, syntax-only validation, and `IParsable`/`ISpanParsable` support.
