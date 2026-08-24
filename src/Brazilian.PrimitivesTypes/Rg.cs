@@ -84,6 +84,23 @@ public readonly record struct Rg
     }
 
     /// <summary>
+    /// Parses a legacy RG using the explicitly supplied issuing state.
+    /// </summary>
+    /// <param name="value">The RG in a canonical or explicitly supported state mask.</param>
+    /// <param name="state">The issuing federative unit.</param>
+    /// <returns>A validated legacy RG value object.</returns>
+    /// <exception cref="FormatException">Thrown when the state is unknown or the value does not satisfy its state rule.</exception>
+    public static Rg Parse(string value, BrazilianState state)
+    {
+        if (!TryParse(value, state, out Rg result))
+        {
+            throw new FormatException("RG must match a supported legacy format for the explicitly supplied issuing state.");
+        }
+
+        return result;
+    }
+
+    /// <summary>
     /// Attempts to parse a legacy RG without issuing-state context.
     /// </summary>
     /// <param name="value">The canonical unmasked RG text.</param>
@@ -99,36 +116,6 @@ public readonly record struct Rg
 
         result = new Rg(normalized, BrazilianState.Unknown);
         return true;
-    }
-
-    /// <summary>
-    /// Determines whether a legacy RG satisfies the context-free structural rules.
-    /// </summary>
-    /// <remarks>
-    /// This validation is format-only. It does not infer a UF and does not apply a state-specific checksum.
-    /// </remarks>
-    /// <param name="value">The canonical unmasked RG text to validate.</param>
-    /// <returns><see langword="true"/> when the value satisfies the context-free structural rules.</returns>
-    public static bool IsValid(string? value)
-    {
-        return TryParse(value, out _);
-    }
-
-    /// <summary>
-    /// Parses a legacy RG using the explicitly supplied issuing state.
-    /// </summary>
-    /// <param name="value">The RG in a canonical or explicitly supported state mask.</param>
-    /// <param name="state">The issuing federative unit.</param>
-    /// <returns>A validated legacy RG value object.</returns>
-    /// <exception cref="FormatException">Thrown when the state is unknown or the value does not satisfy its state rule.</exception>
-    public static Rg Parse(string value, BrazilianState state)
-    {
-        if (!TryParse(value, state, out Rg result))
-        {
-            throw new FormatException("RG must match a supported legacy format for the explicitly supplied issuing state.");
-        }
-
-        return result;
     }
 
     /// <summary>
@@ -148,6 +135,19 @@ public readonly record struct Rg
 
         result = new Rg(normalized, state);
         return true;
+    }
+
+    /// <summary>
+    /// Determines whether a legacy RG satisfies the context-free structural rules.
+    /// </summary>
+    /// <remarks>
+    /// This validation is format-only. It does not infer a UF and does not apply a state-specific checksum.
+    /// </remarks>
+    /// <param name="value">The canonical unmasked RG text to validate.</param>
+    /// <returns><see langword="true"/> when the value satisfies the context-free structural rules.</returns>
+    public static bool IsValid(string? value)
+    {
+        return TryParse(value, out _);
     }
 
     /// <summary>
@@ -233,69 +233,55 @@ public readonly record struct Rg
 
     private static bool TryNormalizeSaoPaulo(ReadOnlySpan<char> input, out string normalized)
     {
+        return input.Length == SaoPauloCanonicalLength
+            ? TryNormalizeSaoPauloCanonical(input, out normalized)
+            : TryNormalizeSaoPauloFormatted(input, out normalized);
+    }
+
+    private static bool TryNormalizeSaoPauloCanonical(ReadOnlySpan<char> input, out string normalized)
+    {
         Span<char> canonical = stackalloc char[SaoPauloCanonicalLength];
-
-        if (input.Length == SaoPauloCanonicalLength)
+        if (!TryCopyAsciiDigits(input[..^1], canonical[..^1])
+            || !TryNormalizeSaoPauloCheckDigit(input[^1], out canonical[^1]))
         {
-            for (int index = 0; index < SaoPauloCanonicalLength - 1; index++)
-            {
-                if (!IsAsciiDigit(input[index]))
-                {
-                    normalized = string.Empty;
-                    return false;
-                }
-
-                canonical[index] = input[index];
-            }
-
-            if (!TryNormalizeSaoPauloCheckDigit(input[^1], out canonical[^1]))
-            {
-                normalized = string.Empty;
-                return false;
-            }
-
-            normalized = new string(canonical);
-            return true;
+            normalized = string.Empty;
+            return false;
         }
 
+        normalized = new string(canonical);
+        return true;
+    }
+
+    private static bool TryNormalizeSaoPauloFormatted(ReadOnlySpan<char> input, out string normalized)
+    {
         if (input.Length != 12 || input[2] != '.' || input[6] != '.' || input[10] != '-')
         {
             normalized = string.Empty;
             return false;
         }
 
-        int targetIndex = 0;
-        for (int sourceIndex = 0; sourceIndex < input.Length; sourceIndex++)
+        ReadOnlySpan<int> digitIndexes = [0, 1, 3, 4, 5, 7, 8, 9];
+        Span<char> canonical = stackalloc char[SaoPauloCanonicalLength];
+        for (int index = 0; index < digitIndexes.Length; index++)
         {
-            if (sourceIndex is 2 or 6 or 10)
+            char value = input[digitIndexes[index]];
+            if (!IsAsciiDigit(value))
             {
-                continue;
+                normalized = string.Empty;
+                return false;
             }
 
-            if (targetIndex == SaoPauloCanonicalLength - 1)
-            {
-                if (!TryNormalizeSaoPauloCheckDigit(input[sourceIndex], out canonical[targetIndex]))
-                {
-                    normalized = string.Empty;
-                    return false;
-                }
-            }
-            else
-            {
-                if (!IsAsciiDigit(input[sourceIndex]))
-                {
-                    normalized = string.Empty;
-                    return false;
-                }
-
-                canonical[targetIndex] = input[sourceIndex];
-            }
-
-            targetIndex++;
+            canonical[index] = value;
         }
 
-        normalized = targetIndex == SaoPauloCanonicalLength ? new string(canonical) : string.Empty;
-        return targetIndex == SaoPauloCanonicalLength;
+        if (!TryNormalizeSaoPauloCheckDigit(input[^1], out canonical[^1]))
+        {
+            normalized = string.Empty;
+            return false;
+        }
+
+        normalized = new string(canonical);
+        return true;
     }
 
     private static bool TryNormalizeRioDeJaneiro(ReadOnlySpan<char> input, out string normalized)
