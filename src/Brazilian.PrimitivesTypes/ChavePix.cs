@@ -14,7 +14,6 @@ namespace Brazilian.PrimitivesTypes;
 public readonly record struct ChavePix : IParsable<ChavePix>, ISpanParsable<ChavePix>
 {
     private const int MaxPixEmailLength = 77;
-    private const int EpiLength = 36;
 
     private readonly string? _value;
 
@@ -22,6 +21,11 @@ public readonly record struct ChavePix : IParsable<ChavePix>, ISpanParsable<Chav
     {
         _value = value;
         Tipo = tipo;
+    }
+
+    internal static ChavePix Create(string value, TipoChavePix tipo)
+    {
+        return new ChavePix(value, tipo);
     }
 
     /// <summary>
@@ -92,7 +96,7 @@ public readonly record struct ChavePix : IParsable<ChavePix>, ISpanParsable<Chav
     /// <exception cref="FormatException">Thrown when <paramref name="value"/> is not a canonical UUID text.</exception>
     public static ChavePix FromChaveAleatoria(string value)
     {
-        if (value is null || !TryNormalizeChaveAleatoria(value.AsSpan(), out string normalized))
+        if (value is null || !PixRandomKeyNormalizer.TryNormalize(value.AsSpan(), out string normalized))
         {
             throw new FormatException("Pix random key must be a canonical UUID text.");
         }
@@ -164,55 +168,7 @@ public readonly record struct ChavePix : IParsable<ChavePix>, ISpanParsable<Chav
     /// <inheritdoc />
     public static bool TryParse(ReadOnlySpan<char> s, IFormatProvider? provider, out ChavePix result)
     {
-        if (Contains(s, '@'))
-        {
-            if (Email.TryParse(s, provider, out Email email) && TryCreateFromEmail(email, out result))
-            {
-                return true;
-            }
-
-            result = default;
-            return false;
-        }
-
-        int matchCount = 0;
-        ChavePix candidate = default;
-
-        if (MobilePhone.TryParse(s, provider, out MobilePhone celular))
-        {
-            candidate = From(celular);
-            matchCount++;
-        }
-
-        if (TryNormalizeChaveAleatoria(s, out string chaveAleatoria))
-        {
-            candidate = new ChavePix(chaveAleatoria, TipoChavePix.Aleatoria);
-            matchCount++;
-        }
-
-        bool isCpf = Cpf.TryParse(s, provider, out Cpf cpf);
-        bool isCnpj = Cnpj.TryParse(s, provider, out Cnpj cnpj);
-
-        if (isCpf)
-        {
-            candidate = From(cpf);
-            matchCount++;
-        }
-
-        if (isCnpj)
-        {
-            candidate = From(cnpj);
-            matchCount++;
-        }
-
-        if (matchCount != 1)
-        {
-            result = default;
-            return false;
-        }
-
-        result = candidate;
-        return true;
+        return PixKeyClassifier.TryClassify(s, provider, out result);
     }
 
     /// <summary>
@@ -234,7 +190,7 @@ public readonly record struct ChavePix : IParsable<ChavePix>, ISpanParsable<Chav
         return Value;
     }
 
-    private static bool TryCreateFromEmail(Email email, out ChavePix result)
+    internal static bool TryCreateFromEmail(Email email, out ChavePix result)
     {
         string value = email.Value.ToLowerInvariant();
         if (value.Length <= MaxPixEmailLength)
@@ -244,70 +200,6 @@ public readonly record struct ChavePix : IParsable<ChavePix>, ISpanParsable<Chav
         }
 
         result = default;
-        return false;
-    }
-
-    private static bool TryNormalizeChaveAleatoria(ReadOnlySpan<char> input, out string normalized)
-    {
-        normalized = string.Empty;
-        if (input.Length != EpiLength)
-        {
-            return false;
-        }
-
-        Span<char> canonical = stackalloc char[EpiLength];
-        for (int index = 0; index < input.Length; index++)
-        {
-            char character = input[index];
-            if (index is 8 or 13 or 18 or 23)
-            {
-                if (character != '-')
-                {
-                    return false;
-                }
-
-                canonical[index] = character;
-                continue;
-            }
-
-            if (!TryNormalizeHex(character, out canonical[index]))
-            {
-                return false;
-            }
-        }
-
-        normalized = new string(canonical);
-        return true;
-    }
-
-    private static bool TryNormalizeHex(char value, out char normalized)
-    {
-        if ((uint)(value - '0') <= 9 || (uint)(value - 'a') <= 'f' - 'a')
-        {
-            normalized = value;
-            return true;
-        }
-
-        if ((uint)(value - 'A') <= 'F' - 'A')
-        {
-            normalized = (char)(value + ('a' - 'A'));
-            return true;
-        }
-
-        normalized = default;
-        return false;
-    }
-
-    private static bool Contains(ReadOnlySpan<char> value, char character)
-    {
-        for (int index = 0; index < value.Length; index++)
-        {
-            if (value[index] == character)
-            {
-                return true;
-            }
-        }
-
         return false;
     }
 }

@@ -13,10 +13,6 @@ namespace Brazilian.PrimitivesTypes;
 /// </remarks>
 public readonly record struct Cnpj : IParsable<Cnpj>, ISpanParsable<Cnpj>, IFormattable
 {
-    private const int CanonicalLength = 14;
-    private const int BaseLength = 12;
-    private const int FormattedLength = 18;
-
     private readonly string? _value;
 
     private Cnpj(string value)
@@ -32,7 +28,7 @@ public readonly record struct Cnpj : IParsable<Cnpj>, ISpanParsable<Cnpj>, IForm
     /// <summary>
     /// Gets the CNPJ formatted with the canonical <c>AA.AAA.AAA/AAAA-00</c> mask.
     /// </summary>
-    public string Formatted => Format(Value);
+    public string Formatted => CnpjFormatter.Format(Value);
 
     /// <summary>
     /// Parses an unmasked or canonically masked numeric or alphanumeric CNPJ.
@@ -59,7 +55,7 @@ public readonly record struct Cnpj : IParsable<Cnpj>, ISpanParsable<Cnpj>, IForm
     /// <inheritdoc />
     public static Cnpj Parse(ReadOnlySpan<char> s, IFormatProvider? provider)
     {
-        if (!TryNormalize(s, out string normalized))
+        if (!CnpjNormalizer.TryNormalize(s, out string normalized))
         {
             throw new FormatException("CNPJ must contain 12 ASCII letters or digits followed by 2 numeric verification digits, optionally using the canonical mask.");
         }
@@ -93,7 +89,7 @@ public readonly record struct Cnpj : IParsable<Cnpj>, ISpanParsable<Cnpj>, IForm
     /// <inheritdoc />
     public static bool TryParse(ReadOnlySpan<char> s, IFormatProvider? provider, out Cnpj result)
     {
-        if (TryNormalize(s, out string normalized))
+        if (CnpjNormalizer.TryNormalize(s, out string normalized))
         {
             result = new Cnpj(normalized);
             return true;
@@ -142,173 +138,5 @@ public readonly record struct Cnpj : IParsable<Cnpj>, ISpanParsable<Cnpj>, IForm
         }
 
         throw new FormatException($"Unsupported CNPJ format '{format}'. Use 'G' or 'F'.");
-    }
-
-    private static bool TryNormalize(ReadOnlySpan<char> input, out string normalized)
-    {
-        Span<char> canonical = stackalloc char[CanonicalLength];
-
-        if (!TryExtractCanonical(input, canonical) || HasRepeatedCharacters(canonical) || !HasValidCheckDigits(canonical))
-        {
-            normalized = string.Empty;
-            return false;
-        }
-
-        normalized = new string(canonical);
-        return true;
-    }
-
-    private static bool TryExtractCanonical(ReadOnlySpan<char> input, Span<char> canonical)
-    {
-        if (input.Length == CanonicalLength)
-        {
-            for (int index = 0; index < CanonicalLength; index++)
-            {
-                if (!TryNormalizeCanonicalCharacter(input[index], index, out canonical[index]))
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        if (input.Length != FormattedLength || input[2] != '.' || input[6] != '.' || input[10] != '/' || input[15] != '-')
-        {
-            return false;
-        }
-
-        int targetIndex = 0;
-        for (int sourceIndex = 0; sourceIndex < FormattedLength; sourceIndex++)
-        {
-            if (sourceIndex is 2 or 6 or 10 or 15)
-            {
-                continue;
-            }
-
-            if (!TryNormalizeCanonicalCharacter(input[sourceIndex], targetIndex, out canonical[targetIndex]))
-            {
-                return false;
-            }
-
-            targetIndex++;
-        }
-
-        return targetIndex == CanonicalLength;
-    }
-
-    private static bool TryNormalizeCanonicalCharacter(char value, int index, out char normalized)
-    {
-        if (index >= BaseLength)
-        {
-            if (IsAsciiDigit(value))
-            {
-                normalized = value;
-                return true;
-            }
-
-            normalized = default;
-            return false;
-        }
-
-        if (IsAsciiDigit(value) || IsAsciiUpperLetter(value))
-        {
-            normalized = value;
-            return true;
-        }
-
-        if (IsAsciiLowerLetter(value))
-        {
-            normalized = (char)(value - ('a' - 'A'));
-            return true;
-        }
-
-        normalized = default;
-        return false;
-    }
-
-    private static bool HasRepeatedCharacters(ReadOnlySpan<char> value)
-    {
-        char first = value[0];
-        for (int index = 1; index < value.Length; index++)
-        {
-            if (value[index] != first)
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private static bool HasValidCheckDigits(ReadOnlySpan<char> value)
-    {
-        int firstCheckDigit = CalculateCheckDigit(value[..BaseLength]);
-        if (value[BaseLength] - '0' != firstCheckDigit)
-        {
-            return false;
-        }
-
-        int secondCheckDigit = CalculateCheckDigit(value[..(BaseLength + 1)]);
-        return value[BaseLength + 1] - '0' == secondCheckDigit;
-    }
-
-    private static int CalculateCheckDigit(ReadOnlySpan<char> value)
-    {
-        int sum = 0;
-        for (int index = 0; index < value.Length; index++)
-        {
-            int weight = ((value.Length - index - 1) % 8) + 2;
-            sum += GetVerificationValue(value[index]) * weight;
-        }
-
-        int remainder = sum % 11;
-        return remainder < 2 ? 0 : 11 - remainder;
-    }
-
-    private static int GetVerificationValue(char value)
-    {
-        // Receita Federal defines the value as the uppercase ASCII code minus 48.
-        return value - '0';
-    }
-
-    private static bool IsAsciiDigit(char value)
-    {
-        return (uint)(value - '0') <= 9;
-    }
-
-    private static bool IsAsciiUpperLetter(char value)
-    {
-        return (uint)(value - 'A') <= 'Z' - 'A';
-    }
-
-    private static bool IsAsciiLowerLetter(char value)
-    {
-        return (uint)(value - 'a') <= 'z' - 'a';
-    }
-
-    private static string Format(string value)
-    {
-        return string.Create(FormattedLength, value, static (destination, source) =>
-        {
-            destination[0] = source[0];
-            destination[1] = source[1];
-            destination[2] = '.';
-            destination[3] = source[2];
-            destination[4] = source[3];
-            destination[5] = source[4];
-            destination[6] = '.';
-            destination[7] = source[5];
-            destination[8] = source[6];
-            destination[9] = source[7];
-            destination[10] = '/';
-            destination[11] = source[8];
-            destination[12] = source[9];
-            destination[13] = source[10];
-            destination[14] = source[11];
-            destination[15] = '-';
-            destination[16] = source[12];
-            destination[17] = source[13];
-        });
     }
 }
