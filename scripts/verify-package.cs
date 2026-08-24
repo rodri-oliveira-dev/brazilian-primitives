@@ -14,7 +14,9 @@ if (args.Length < 1)
 
 var packageDirectory = Path.GetFullPath(args[0]);
 var requireSourceLink = false;
+var packageId = "Brazilian.PrimitivesTypes";
 string? expectedVersion = null;
+string? expectedDependency = null;
 
 for (var index = 1; index < args.Length; index++)
 {
@@ -23,8 +25,14 @@ for (var index = 1; index < args.Length; index++)
         case "--require-source-link":
             requireSourceLink = true;
             break;
+        case "--package-id" when index + 1 < args.Length:
+            packageId = args[++index];
+            break;
         case "--expected-version" when index + 1 < args.Length:
             expectedVersion = args[++index];
+            break;
+        case "--expected-dependency" when index + 1 < args.Length:
+            expectedDependency = args[++index];
             break;
         default:
             PrintUsage();
@@ -32,9 +40,12 @@ for (var index = 1; index < args.Length; index++)
     }
 }
 
-var nupkg = Directory.EnumerateFiles(packageDirectory, "*.nupkg")
-    .Single(path => !path.EndsWith(".snupkg", StringComparison.OrdinalIgnoreCase));
-var snupkg = Directory.EnumerateFiles(packageDirectory, "*.snupkg").Single();
+var nupkg = FindPackageById(packageDirectory, packageId);
+var symbolsPath = Path.ChangeExtension(nupkg, ".snupkg");
+if (!File.Exists(symbolsPath))
+{
+    throw new InvalidOperationException($"Pacote de símbolos não encontrado: {Path.GetFileName(symbolsPath)}");
+}
 
 using var packageArchive = ZipFile.OpenRead(nupkg);
 var nuspecEntry = packageArchive.Entries.Single(entry =>
@@ -46,17 +57,24 @@ var ns = nuspec.Root!.Name.Namespace;
 var metadata = nuspec.Root.Element(ns + "metadata")
     ?? throw new InvalidOperationException("Metadados do .nuspec não encontrados.");
 
-AssertEqual("Brazilian.PrimitivesTypes", metadata.Element(ns + "id")?.Value, "PackageId");
+AssertEqual(packageId, metadata.Element(ns + "id")?.Value, "PackageId");
 AssertNotBlank(metadata.Element(ns + "description")?.Value, "Description");
+AssertEntryExists(packageArchive, "README.md");
 
 if (!string.IsNullOrWhiteSpace(expectedVersion))
 {
     AssertEqual(expectedVersion, metadata.Element(ns + "version")?.Value, "Version");
 }
 
-var assemblyEntry = packageArchive.GetEntry("lib/net10.0/Brazilian.PrimitivesTypes.dll")
-    ?? throw new InvalidOperationException("Assembly principal não encontrado no pacote.");
-AssertEntryExists(packageArchive, "lib/net10.0/Brazilian.PrimitivesTypes.xml");
+if (!string.IsNullOrWhiteSpace(expectedDependency))
+{
+    AssertDependency(metadata, ns, expectedDependency);
+}
+
+var assemblyEntryPath = $"lib/net10.0/{packageId}.dll";
+var assemblyEntry = packageArchive.GetEntry(assemblyEntryPath)
+    ?? throw new InvalidOperationException($"Assembly principal não encontrado no pacote: {assemblyEntryPath}");
+AssertEntryExists(packageArchive, $"lib/net10.0/{packageId}.xml");
 
 using var assemblyStream = new MemoryStream();
 using (var entryStream = assemblyEntry.Open())
@@ -104,9 +122,10 @@ if (requireSourceLink)
     AssertNotBlank(repositoryCommit, "RepositoryCommit");
 }
 
-using var symbolsArchive = ZipFile.OpenRead(snupkg);
-var pdbEntry = symbolsArchive.GetEntry("lib/net10.0/Brazilian.PrimitivesTypes.pdb")
-    ?? throw new InvalidOperationException("PDB não encontrado no .snupkg.");
+using var symbolsArchive = ZipFile.OpenRead(symbolsPath);
+var pdbEntryPath = $"lib/net10.0/{packageId}.pdb";
+var pdbEntry = symbolsArchive.GetEntry(pdbEntryPath)
+    ?? throw new InvalidOperationException($"PDB não encontrado no .snupkg: {pdbEntryPath}");
 
 using var pdbStream = new MemoryStream();
 using (var entryStream = pdbEntry.Open())
@@ -145,7 +164,7 @@ if (!string.IsNullOrWhiteSpace(sourceLinkJson)
 }
 
 Console.WriteLine($"Pacote validado: {Path.GetFileName(nupkg)}");
-Console.WriteLine($"Símbolos validados: {Path.GetFileName(snupkg)}");
+Console.WriteLine($"Símbolos validados: {Path.GetFileName(symbolsPath)}");
 
 if (!string.IsNullOrWhiteSpace(expectedVersion))
 {
@@ -175,11 +194,45 @@ else
 
 return 0;
 
+static string FindPackageById(string packageDirectory, string expectedPackageId)
+{
+    var matches = new List<string>();
+
+    foreach (var path in Directory.EnumerateFiles(packageDirectory, "*.nupkg"))
+    {
+        if (path.EndsWith(".snupkg", StringComparison.OrdinalIgnoreCase))
+        {
+            continue;
+        }
+
+        using var archive = ZipFile.OpenRead(path);
+        var nuspecEntry = archive.Entries.Single(entry =>
+            entry.FullName.EndsWith(".nuspec", StringComparison.OrdinalIgnoreCase));
+        using var stream = nuspecEntry.Open();
+        var document = XDocument.Load(stream);
+        var ns = document.Root!.Name.Namespace;
+        var actualPackageId = document.Root.Element(ns + "metadata")?.Element(ns + "id")?.Value;
+
+        if (string.Equals(expectedPackageId, actualPackageId, StringComparison.Ordinal))
+        {
+            matches.Add(path);
+        }
+    }
+
+    return matches.Count switch
+    {
+        1 => matches[0],
+        0 => throw new InvalidOperationException($"Pacote '{expectedPackageId}' não encontrado em {packageDirectory}."),
+        _ => throw new InvalidOperationException($"Mais de um pacote '{expectedPackageId}' foi encontrado em {packageDirectory}.")
+    };
+}
+
 static void PrintUsage()
 {
     Console.Error.WriteLine(
         "Uso: dotnet run --file scripts/verify-package.cs -- <diretorio-de-pacotes> "
-        + "[--require-source-link] [--expected-version <versao>]");
+        + "[--package-id <id>] [--require-source-link] [--expected-version <versao>] "
+        + "[--expected-dependency <id>]");
 }
 
 static void AssertEntryExists(ZipArchive archive, string path)
@@ -187,6 +240,21 @@ static void AssertEntryExists(ZipArchive archive, string path)
     if (archive.GetEntry(path) is null)
     {
         throw new InvalidOperationException($"Entrada obrigatória ausente no pacote: {path}");
+    }
+}
+
+static void AssertDependency(XElement metadata, XNamespace ns, string expectedDependency)
+{
+    var dependencyExists = metadata
+        .Descendants(ns + "dependency")
+        .Any(dependency => string.Equals(
+            dependency.Attribute("id")?.Value,
+            expectedDependency,
+            StringComparison.Ordinal));
+
+    if (!dependencyExists)
+    {
+        throw new InvalidOperationException($"Dependência obrigatória ausente no pacote: {expectedDependency}");
     }
 }
 

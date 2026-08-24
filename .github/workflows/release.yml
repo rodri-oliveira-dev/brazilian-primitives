@@ -131,20 +131,31 @@ jobs:
       - name: Pack release artifacts
         env:
           PACKAGE_VERSION: ${{ steps.version.outputs.package_version }}
-        run: >-
-          dotnet pack src/Brazilian.PrimitivesTypes/Brazilian.PrimitivesTypes.csproj
-          --configuration Release
-          --no-build
-          --output artifacts/packages
-          -p:Version="$PACKAGE_VERSION"
+        run: |
+          dotnet pack src/Brazilian.PrimitivesTypes/Brazilian.PrimitivesTypes.csproj \
+            --configuration Release \
+            --no-build \
+            --output artifacts/packages \
+            -p:Version="$PACKAGE_VERSION"
+          dotnet pack src/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer.csproj \
+            --configuration Release \
+            --no-build \
+            --output artifacts/packages \
+            -p:Version="$PACKAGE_VERSION"
 
-      - name: Validate package, version, assembly metadata, symbols and Source Link
+      - name: Validate packages, versions, assembly metadata, symbols and Source Link
         env:
           PACKAGE_VERSION: ${{ steps.version.outputs.package_version }}
-        run: >-
-          dotnet run --file scripts/verify-package.cs -- artifacts/packages
-          --require-source-link
-          --expected-version "$PACKAGE_VERSION"
+        run: |
+          dotnet run --file scripts/verify-package.cs -- artifacts/packages \
+            --package-id Brazilian.PrimitivesTypes \
+            --require-source-link \
+            --expected-version "$PACKAGE_VERSION"
+          dotnet run --file scripts/verify-package.cs -- artifacts/packages \
+            --package-id Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer \
+            --expected-dependency Brazilian.PrimitivesTypes \
+            --require-source-link \
+            --expected-version "$PACKAGE_VERSION"
 
       - name: Upload release artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

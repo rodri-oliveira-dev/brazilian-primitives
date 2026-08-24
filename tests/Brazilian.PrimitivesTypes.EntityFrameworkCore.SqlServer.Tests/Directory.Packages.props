@@ -1,0 +1,7 @@
+<Project>
+  <Import Project="../../Directory.Packages.props" />
+
+  <ItemGroup>
+    <PackageVersion Include="Testcontainers.MsSql" Version="4.14.0" />
+  </ItemGroup>
+</Project>
