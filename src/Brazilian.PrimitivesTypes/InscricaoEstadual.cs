@@ -77,6 +77,23 @@ public readonly record struct InscricaoEstadual
     }
 
     /// <summary>
+    /// Parses an Inscricao Estadual using the explicitly supplied state context.
+    /// </summary>
+    /// <param name="value">The registration text.</param>
+    /// <param name="state">The federative unit context.</param>
+    /// <returns>A validated state tax registration value object.</returns>
+    /// <exception cref="FormatException">Thrown when the state is unknown or the value does not satisfy its state strategy.</exception>
+    public static InscricaoEstadual Parse(string value, BrazilianState state)
+    {
+        if (!TryParse(value, state, out InscricaoEstadual result))
+        {
+            throw new FormatException("Inscricao Estadual must match the documented structural strategy for the explicitly supplied state.");
+        }
+
+        return result;
+    }
+
+    /// <summary>
     /// Attempts to parse an Inscricao Estadual without federative-unit context.
     /// </summary>
     /// <param name="value">The canonical registration text.</param>
@@ -92,36 +109,6 @@ public readonly record struct InscricaoEstadual
 
         result = new InscricaoEstadual(normalized, BrazilianState.Unknown);
         return true;
-    }
-
-    /// <summary>
-    /// Determines whether the value satisfies the context-free structural rules.
-    /// </summary>
-    /// <remarks>
-    /// This validation is format-only. It does not infer a UF and does not apply a state-specific checksum.
-    /// </remarks>
-    /// <param name="value">The registration text.</param>
-    /// <returns><see langword="true"/> when the value contains 8 to 14 ASCII digits.</returns>
-    public static bool IsValid(string? value)
-    {
-        return TryParse(value, out _);
-    }
-
-    /// <summary>
-    /// Parses an Inscricao Estadual using the explicitly supplied state context.
-    /// </summary>
-    /// <param name="value">The registration text.</param>
-    /// <param name="state">The federative unit context.</param>
-    /// <returns>A validated state tax registration value object.</returns>
-    /// <exception cref="FormatException">Thrown when the state is unknown or the value does not satisfy its state strategy.</exception>
-    public static InscricaoEstadual Parse(string value, BrazilianState state)
-    {
-        if (!TryParse(value, state, out InscricaoEstadual result))
-        {
-            throw new FormatException("Inscricao Estadual must match the documented structural strategy for the explicitly supplied state.");
-        }
-
-        return result;
     }
 
     /// <summary>
@@ -141,6 +128,19 @@ public readonly record struct InscricaoEstadual
 
         result = new InscricaoEstadual(normalized, state);
         return true;
+    }
+
+    /// <summary>
+    /// Determines whether the value satisfies the context-free structural rules.
+    /// </summary>
+    /// <remarks>
+    /// This validation is format-only. It does not infer a UF and does not apply a state-specific checksum.
+    /// </remarks>
+    /// <param name="value">The registration text.</param>
+    /// <returns><see langword="true"/> when the value contains 8 to 14 ASCII digits.</returns>
+    public static bool IsValid(string? value)
+    {
+        return TryParse(value, out _);
     }
 
     /// <summary>
