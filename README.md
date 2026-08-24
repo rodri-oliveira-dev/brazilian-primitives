@@ -31,6 +31,18 @@ Console.WriteLine(cep.Formatted);   // 01311-000
 Console.WriteLine(pix.Value);       // +5511987654321
 ```
 
+## Entity Framework Core + SQL Server
+
+A integração com EF Core é opcional e vive em um pacote separado:
+
+```bash
+dotnet add package Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer
+```
+
+Ela persiste os `Value` canônicos em colunas SQL Server, respeita `T?` como SQL `NULL` e permite consultas LINQ usando os tipos fortes do domínio. RG e Inscrição Estadual suportam modos explícitos context-free e state-aware; nenhuma UF é inferida automaticamente.
+
+Consulte o guia completo de [Entity Framework Core com SQL Server](docs/pt-BR/entity-framework-core-sql-server.md) para o exemplo `Customer`, convenções globais, Fluent API, schema esperado, nullabilidade e persistência de `Rg`/`InscricaoEstadual` com e sem UF.
+
 ## O Que a Biblioteca Faz
 
 - Representa identificadores brasileiros com tipos explícitos.
@@ -84,11 +96,13 @@ dotnet build Brazilian.PrimitivesTypes.slnx --configuration Release --no-restore
 dotnet test Brazilian.PrimitivesTypes.slnx --configuration Release --no-build
 ```
 
-Validação de pacote:
+Validação dos pacotes:
 
 ```bash
 dotnet pack src/Brazilian.PrimitivesTypes/Brazilian.PrimitivesTypes.csproj --configuration Release --no-build --output artifacts/packages
-dotnet run --file scripts/verify-package.cs -- artifacts/packages
+dotnet pack src/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer.csproj --configuration Release --no-build --output artifacts/packages
+dotnet run --file scripts/verify-package.cs -- artifacts/packages --package-id Brazilian.PrimitivesTypes
+dotnet run --file scripts/verify-package.cs -- artifacts/packages --package-id Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer --expected-dependency Brazilian.PrimitivesTypes
 ```
 
 ## Contribuição
