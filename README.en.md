@@ -1,5 +1,11 @@
 # Brazilian.PrimitivesTypes
 
+[![Build & Tests](https://github.com/rodri-oliveira-dev/brazilian-primitives/actions/workflows/ci.yml/badge.svg)](https://github.com/rodri-oliveira-dev/brazilian-primitives/actions/workflows/ci.yml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=rodri-oliveira-dev_brazilian-primitives&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=rodri-oliveira-dev_brazilian-primitives)
+[![.NET](https://img.shields.io/badge/.NET-10.0-512BD4)](https://dotnet.microsoft.com/)
+[![Coverage](https://img.shields.io/badge/coverage-%E2%89%A570%25-brightgreen)](https://github.com/rodri-oliveira-dev/brazilian-primitives/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Brazilian.PrimitivesTypes is a small .NET library for modeling Brazilian identifiers as immutable value objects.
 
 It validates and normalizes values such as CPF, CNPJ, CEP, Pix keys, Brazilian phone numbers, vehicle plates, RENAVAM,
