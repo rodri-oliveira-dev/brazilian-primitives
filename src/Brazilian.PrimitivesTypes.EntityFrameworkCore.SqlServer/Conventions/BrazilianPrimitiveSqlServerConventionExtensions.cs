@@ -1,6 +1,4 @@
-using Brazilian.PrimitivesTypes;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer;
 
@@ -34,24 +32,24 @@ public static class BrazilianPrimitiveSqlServerConventionExtensions
     {
         ArgumentNullException.ThrowIfNull(configurationBuilder);
 
-        Configure<Cpf, CpfValueConverter>(configurationBuilder, 11);
-        Configure<Cnpj, CnpjValueConverter>(configurationBuilder, 14);
-        Configure<CpfCnpj, CpfCnpjValueConverter>(configurationBuilder, 14);
-        Configure<Cep, CepValueConverter>(configurationBuilder, 8);
-        Configure<Email, EmailValueConverter>(configurationBuilder, 254);
-        Configure<MobilePhone, MobilePhoneValueConverter>(configurationBuilder, 11);
-        Configure<LandlinePhone, LandlinePhoneValueConverter>(configurationBuilder, 10);
-        Configure<TelefoneBrasileiro, TelefoneBrasileiroValueConverter>(configurationBuilder, 11);
-        Configure<ChavePix, ChavePixValueConverter>(configurationBuilder, 77);
-        Configure<Cnh, CnhValueConverter>(configurationBuilder, 11);
-        Configure<Cns, CnsValueConverter>(configurationBuilder, 15);
-        Configure<TituloEleitoral, TituloEleitoralValueConverter>(configurationBuilder, 12);
-        Configure<Nit, NitValueConverter>(configurationBuilder, 11);
-        Configure<PisPasep, PisPasepValueConverter>(configurationBuilder, 11);
-        Configure<PlacaVeiculo, PlacaVeiculoValueConverter>(configurationBuilder, 7);
-        Configure<Renavam, RenavamValueConverter>(configurationBuilder, 11);
-        Configure<Ispb, IspbValueConverter>(configurationBuilder, 8);
-        Configure<CodigoCompe, CodigoCompeValueConverter>(configurationBuilder, 3);
+        ScalarPrimitiveSqlServerMappings.Cpf.Apply(configurationBuilder);
+        ScalarPrimitiveSqlServerMappings.Cnpj.Apply(configurationBuilder);
+        ScalarPrimitiveSqlServerMappings.CpfCnpj.Apply(configurationBuilder);
+        ScalarPrimitiveSqlServerMappings.Cep.Apply(configurationBuilder);
+        ScalarPrimitiveSqlServerMappings.Email.Apply(configurationBuilder);
+        ScalarPrimitiveSqlServerMappings.MobilePhone.Apply(configurationBuilder);
+        ScalarPrimitiveSqlServerMappings.LandlinePhone.Apply(configurationBuilder);
+        ScalarPrimitiveSqlServerMappings.TelefoneBrasileiro.Apply(configurationBuilder);
+        ScalarPrimitiveSqlServerMappings.ChavePix.Apply(configurationBuilder);
+        ScalarPrimitiveSqlServerMappings.Cnh.Apply(configurationBuilder);
+        ScalarPrimitiveSqlServerMappings.Cns.Apply(configurationBuilder);
+        ScalarPrimitiveSqlServerMappings.TituloEleitoral.Apply(configurationBuilder);
+        ScalarPrimitiveSqlServerMappings.Nit.Apply(configurationBuilder);
+        ScalarPrimitiveSqlServerMappings.PisPasep.Apply(configurationBuilder);
+        ScalarPrimitiveSqlServerMappings.PlacaVeiculo.Apply(configurationBuilder);
+        ScalarPrimitiveSqlServerMappings.Renavam.Apply(configurationBuilder);
+        ScalarPrimitiveSqlServerMappings.Ispb.Apply(configurationBuilder);
+        ScalarPrimitiveSqlServerMappings.CodigoCompe.Apply(configurationBuilder);
 
         return configurationBuilder;
     }
@@ -82,26 +80,9 @@ public static class BrazilianPrimitiveSqlServerConventionExtensions
     {
         ArgumentNullException.ThrowIfNull(configurationBuilder);
 
-        Configure<Rg, RgValueConverter>(configurationBuilder, 10);
-        Configure<InscricaoEstadual, InscricaoEstadualValueConverter>(configurationBuilder, 14);
+        ContextFreeStateSqlServerMappings.Rg.Apply(configurationBuilder);
+        ContextFreeStateSqlServerMappings.InscricaoEstadual.Apply(configurationBuilder);
 
         return configurationBuilder;
-    }
-
-    private static void Configure<TPrimitive, TConverter>(
-        ModelConfigurationBuilder configurationBuilder,
-        int maxLength)
-        where TPrimitive : struct
-        where TConverter : ValueConverter
-    {
-        configurationBuilder.Properties<TPrimitive>()
-            .HaveConversion<TConverter>()
-            .HaveMaxLength(maxLength)
-            .AreUnicode(false);
-
-        configurationBuilder.Properties<TPrimitive?>()
-            .HaveConversion<TConverter>()
-            .HaveMaxLength(maxLength)
-            .AreUnicode(false);
     }
 }
