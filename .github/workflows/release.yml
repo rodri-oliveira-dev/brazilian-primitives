@@ -226,12 +226,48 @@ jobs:
           --api-key "$NUGET_API_KEY"
           --skip-duplicate
 
+  publish-github-packages:
+    name: Publish to GitHub Packages
+    needs:
+      - build-and-pack
+      - ensure-release-tag
+    if: >-
+      needs.build-and-pack.outputs.should-publish == 'true' &&
+      needs.build-and-pack.outputs.safe-to-publish == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Configure .NET 10
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Download release artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: release-packages
+          path: artifacts/packages
+
+      - name: Publish packages to GitHub Packages
+        env:
+          GITHUB_PACKAGE_SOURCE: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
+          GITHUB_PACKAGE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: >-
+          dotnet nuget push "artifacts/packages/*.nupkg"
+          --source "$GITHUB_PACKAGE_SOURCE"
+          --api-key "$GITHUB_PACKAGE_TOKEN"
+          --skip-duplicate
+
   github-release:
     name: Create GitHub Release
     needs:
       - build-and-pack
       - ensure-release-tag
       - publish-nuget
+      - publish-github-packages
     if: >-
       always() &&
       needs.build-and-pack.result == 'success' &&
@@ -239,6 +275,11 @@ jobs:
       (
         needs.build-and-pack.outputs.nuget-publishing-enabled != 'true' ||
         needs.publish-nuget.result == 'success'
+      ) &&
+      (
+        needs.build-and-pack.outputs.should-publish != 'true' ||
+        needs.build-and-pack.outputs.safe-to-publish != 'true' ||
+        needs.publish-github-packages.result == 'success'
       )
     runs-on: ubuntu-latest
     permissions:
