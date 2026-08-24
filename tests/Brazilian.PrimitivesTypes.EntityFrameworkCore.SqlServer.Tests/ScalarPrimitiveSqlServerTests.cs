@@ -1,3 +1,4 @@
+using System.Globalization;
 using Brazilian.PrimitivesTypes;
 using Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer.Tests.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -86,7 +87,7 @@ public sealed class ScalarPrimitiveSqlServerTests
             await context.Database.EnsureDeletedAsync(cancellationToken);
             await context.Database.EnsureCreatedAsync(cancellationToken);
 
-            Email expectedEmail = Email.Parse("USER@Example.COM");
+            Email expectedEmail = Email.Parse("USER@Example.COM", CultureInfo.InvariantCulture);
             context.EmailRecords.AddRange(
                 new EmailRecord { Id = 1, Email = null },
                 new EmailRecord { Id = 2, Email = expectedEmail });
@@ -147,25 +148,25 @@ public sealed class ScalarPrimitiveSqlServerTests
         return new ScalarPrimitiveRecord
         {
             Id = id,
-            Cpf = Cpf.Parse("529.982.247-25"),
-            Cnpj = Cnpj.Parse("00000000e08g12"),
-            CpfCnpj = CpfCnpj.Parse("00.000.000/e08g-12"),
-            Cep = Cep.Parse("01311-000"),
-            Email = Email.Parse("usuario@domínio.com"),
+            Cpf = Cpf.Parse("529.982.247-25", CultureInfo.InvariantCulture),
+            Cnpj = Cnpj.Parse("00000000e08g12", CultureInfo.InvariantCulture),
+            CpfCnpj = CpfCnpj.Parse("00.000.000/e08g-12", CultureInfo.InvariantCulture),
+            Cep = Cep.Parse("01311-000", CultureInfo.InvariantCulture),
+            Email = Email.Parse("usuario@domínio.com", CultureInfo.InvariantCulture),
             OptionalEmail = optionalEmail,
-            MobilePhone = MobilePhone.Parse("(11) 98765-4321"),
-            LandlinePhone = LandlinePhone.Parse("(11) 3234-5678"),
-            TelefoneBrasileiro = TelefoneBrasileiro.Parse("(11) 98765-4321"),
-            ChavePix = ChavePix.From(Cpf.Parse("11900000083")),
-            Cnh = Cnh.Parse("02650306461"),
-            Cns = Cns.Parse("123456789010000"),
-            TituloEleitoral = TituloEleitoral.Parse("000123450159"),
-            Nit = Nit.Parse("00000000001"),
-            PisPasep = PisPasep.Parse("01234567897"),
-            PlacaVeiculo = PlacaVeiculo.Parse("abc1d23"),
-            Renavam = Renavam.Parse("00123456789"),
-            Ispb = Ispb.Parse("00000001"),
-            CodigoCompe = CodigoCompe.Parse("001"),
+            MobilePhone = MobilePhone.Parse("(11) 98765-4321", CultureInfo.InvariantCulture),
+            LandlinePhone = LandlinePhone.Parse("(11) 3234-5678", CultureInfo.InvariantCulture),
+            TelefoneBrasileiro = TelefoneBrasileiro.Parse("(11) 98765-4321", CultureInfo.InvariantCulture),
+            ChavePix = ChavePix.From(Cpf.Parse("11900000083", CultureInfo.InvariantCulture)),
+            Cnh = Cnh.Parse("02650306461", CultureInfo.InvariantCulture),
+            Cns = Cns.Parse("123456789010000", CultureInfo.InvariantCulture),
+            TituloEleitoral = TituloEleitoral.Parse("000123450159", CultureInfo.InvariantCulture),
+            Nit = Nit.Parse("00000000001", CultureInfo.InvariantCulture),
+            PisPasep = PisPasep.Parse("01234567897", CultureInfo.InvariantCulture),
+            PlacaVeiculo = PlacaVeiculo.Parse("abc1d23", CultureInfo.InvariantCulture),
+            Renavam = Renavam.Parse("00123456789", CultureInfo.InvariantCulture),
+            Ispb = Ispb.Parse("00000001", CultureInfo.InvariantCulture),
+            CodigoCompe = CodigoCompe.Parse("001", CultureInfo.InvariantCulture),
         };
     }
 
