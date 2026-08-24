@@ -275,7 +275,7 @@ internal static class ChavePixCanonicalValueParser
             return ChavePix.From(MobilePhone.Parse(value));
         }
 
-        if (value.Contains('@', StringComparison.Ordinal))
+        if (value.Contains('@'))
         {
             return ChavePix.From(Email.Parse(value));
         }
