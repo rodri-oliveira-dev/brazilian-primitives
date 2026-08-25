@@ -60,9 +60,17 @@ internal sealed class TestDbCommand(TestDbConnection connection) : DbCommand
     {
     }
 
-    public override int ExecuteNonQuery() => connection?.NonQueryResult ?? 0;
+    public override int ExecuteNonQuery()
+    {
+        connection?.Capture(this);
+        return connection?.NonQueryResult ?? 0;
+    }
 
-    public override object? ExecuteScalar() => connection?.ScalarResult;
+    public override object? ExecuteScalar()
+    {
+        connection?.Capture(this);
+        return connection?.ScalarResult;
+    }
 
     public override void Prepare()
     {
@@ -70,6 +78,9 @@ internal sealed class TestDbCommand(TestDbConnection connection) : DbCommand
 
     protected override DbParameter CreateDbParameter() => new TestDbParameter();
 
-    protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior) =>
-        connection?.ReaderFactory?.Invoke() ?? new DataTable().CreateDataReader();
+    protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
+    {
+        connection?.Capture(this);
+        return connection?.ReaderFactory?.Invoke() ?? new DataTable().CreateDataReader();
+    }
 }
