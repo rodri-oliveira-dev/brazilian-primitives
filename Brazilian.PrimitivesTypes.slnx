@@ -2,9 +2,11 @@
   <Folder Name="/src/">
     <Project Path="src/Brazilian.PrimitivesTypes/Brazilian.PrimitivesTypes.csproj" />
     <Project Path="src/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer.csproj" />
+    <Project Path="src/Brazilian.PrimitivesTypes.Dapper.SqlServer/Brazilian.PrimitivesTypes.Dapper.SqlServer.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Brazilian.PrimitivesTypes.Tests/Brazilian.PrimitivesTypes.Tests.csproj" />
     <Project Path="tests/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer.Tests/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer.Tests.csproj" />
+    <Project Path="tests/Brazilian.PrimitivesTypes.Dapper.SqlServer.Tests/Brazilian.PrimitivesTypes.Dapper.SqlServer.Tests.csproj" />
   </Folder>
 </Solution>

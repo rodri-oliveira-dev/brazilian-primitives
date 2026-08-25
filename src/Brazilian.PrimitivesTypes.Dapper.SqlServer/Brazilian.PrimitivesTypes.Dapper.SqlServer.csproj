@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+
+    <IsPackable>true</IsPackable>
+    <EnablePackageValidation>true</EnablePackageValidation>
+    <PackageId>Brazilian.PrimitivesTypes.Dapper.SqlServer</PackageId>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Description>Dapper SQL Server integration for Brazilian.PrimitivesTypes value objects.</Description>
+    <RepositoryType>git</RepositoryType>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <RootNamespace>Brazilian.PrimitivesTypes.Dapper.SqlServer</RootNamespace>
+
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <DebugType>portable</DebugType>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Brazilian.PrimitivesTypes/Brazilian.PrimitivesTypes.csproj" />
+    <PackageReference Include="Dapper" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
+    <None Include="../../README.pt-BR.md" Pack="true" PackagePath="/" />
+    <None Include="../../README.en.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+</Project>
