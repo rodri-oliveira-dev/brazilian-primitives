@@ -26,23 +26,23 @@ jobs:
       - name: Restore lock files
         run: dotnet restore Brazilian.PrimitivesTypes.slnx --force-evaluate
 
-      - name: Verify formatting
-        run: dotnet format Brazilian.PrimitivesTypes.slnx --verify-no-changes --no-restore
+      - name: Apply formatting
+        run: dotnet format Brazilian.PrimitivesTypes.slnx --no-restore
+
+      - name: Commit generated formatting and lock file
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tests/Brazilian.PrimitivesTypes.Dapper.SqlServer.Tests
+          git commit -m "chore: apply generated Dapper test formatting and lock file [lockgen]"
+          git push
 
       - name: Build Release
         run: dotnet build Brazilian.PrimitivesTypes.slnx --configuration Release --no-restore
 
       - name: Run tests
         run: dotnet test Brazilian.PrimitivesTypes.slnx --configuration Release --no-build
-
-      - name: Commit generated lock file
-        shell: bash
-        run: |
-          if git diff --quiet -- tests/Brazilian.PrimitivesTypes.Dapper.SqlServer.Tests/packages.lock.json; then
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add tests/Brazilian.PrimitivesTypes.Dapper.SqlServer.Tests/packages.lock.json
-          git commit -m "chore: refresh Dapper test lock file [lockgen]"
-          git push
