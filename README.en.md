@@ -38,6 +38,28 @@ Console.WriteLine(cep.Formatted);   // 01311-000
 Console.WriteLine(pix.Value);       // +5511987654321
 ```
 
+## Dapper + SQL Server
+
+Dapper integration is optional and lives in a separate package:
+
+```bash
+dotnet add package Brazilian.PrimitivesTypes.Dapper.SqlServer
+```
+
+Register the handlers once during application bootstrap:
+
+```csharp
+using Brazilian.PrimitivesTypes.Dapper.SqlServer;
+
+BrazilianPrimitivesDapperSqlServer.Register();
+```
+
+The handlers let supported primitives participate directly in scalar `INSERT`, `UPDATE`, and `WHERE` parameters and be materialized from `SELECT` queries. Parameters use canonical `Value` data with ANSI string metadata and the recommended `varchar(n)` size.
+
+Dapper does not create schema or migrations, so the application remains responsible for SQL Server columns. `Rg` and `InscricaoEstadual` are **Value-only** in this integration: state context is not persisted or restored. Dapper 2.1.x list expansion (`IN @Values`) does not invoke the registered handler for each element, so collections of primitives are not claimed as a supported handler scenario.
+
+See the complete [Dapper with SQL Server](docs/en/dapper-sql-server.md) guide for installation, `SqlConnection`, registration, `INSERT`, `SELECT`, `UPDATE`, parameterized filters, nullable values, `DynamicParameters`, the full `varchar(n)` table, and the differences from EF Core.
+
 ## Entity Framework Core + SQL Server
 
 EF Core integration is optional and lives in a separate package:
@@ -109,8 +131,11 @@ Package validation:
 ```bash
 dotnet pack src/Brazilian.PrimitivesTypes/Brazilian.PrimitivesTypes.csproj --configuration Release --no-build --output artifacts/packages
 dotnet pack src/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer.csproj --configuration Release --no-build --output artifacts/packages
+dotnet pack src/Brazilian.PrimitivesTypes.Dapper.SqlServer/Brazilian.PrimitivesTypes.Dapper.SqlServer.csproj --configuration Release --no-build --output artifacts/packages
 dotnet run --file scripts/verify-package.cs -- artifacts/packages --package-id Brazilian.PrimitivesTypes
 dotnet run --file scripts/verify-package.cs -- artifacts/packages --package-id Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer --expected-dependency Brazilian.PrimitivesTypes
+dotnet run --file scripts/verify-package.cs -- artifacts/packages --package-id Brazilian.PrimitivesTypes.Dapper.SqlServer --expected-dependency Brazilian.PrimitivesTypes
+dotnet run --file scripts/verify-package.cs -- artifacts/packages --package-id Brazilian.PrimitivesTypes.Dapper.SqlServer --expected-dependency Dapper
 ```
 
 ## Contributing
