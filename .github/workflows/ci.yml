@@ -237,11 +237,14 @@ jobs:
         run: |
           dotnet pack src/Brazilian.PrimitivesTypes/Brazilian.PrimitivesTypes.csproj --configuration Release --no-build --output artifacts/packages
           dotnet pack src/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer.csproj --configuration Release --no-build --output artifacts/packages
+          dotnet pack src/Brazilian.PrimitivesTypes.Dapper.SqlServer/Brazilian.PrimitivesTypes.Dapper.SqlServer.csproj --configuration Release --no-build --output artifacts/packages
 
       - name: Validar pacotes, símbolos e Source Link
         run: |
           dotnet run --file scripts/verify-package.cs -- artifacts/packages --package-id Brazilian.PrimitivesTypes --require-source-link
           dotnet run --file scripts/verify-package.cs -- artifacts/packages --package-id Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer --expected-dependency Brazilian.PrimitivesTypes --require-source-link
+          dotnet run --file scripts/verify-package.cs -- artifacts/packages --package-id Brazilian.PrimitivesTypes.Dapper.SqlServer --expected-dependency Brazilian.PrimitivesTypes --require-source-link
+          dotnet run --file scripts/verify-package.cs -- artifacts/packages --package-id Brazilian.PrimitivesTypes.Dapper.SqlServer --expected-dependency Dapper --require-source-link
 
       - name: Validar consumo do pacote local
         shell: bash
@@ -268,6 +271,65 @@ jobs:
           _ = Cpf.Parse("529.982.247-25");
           Console.WriteLine("Brazilian.PrimitivesTypes package consumed successfully.");
           EOF
+
+          dotnet build "$consumer_project" --configuration Release --no-restore
+
+      - name: Validar consumo do pacote Dapper local
+        shell: bash
+        run: |
+          project="src/Brazilian.PrimitivesTypes.Dapper.SqlServer/Brazilian.PrimitivesTypes.Dapper.SqlServer.csproj"
+          version="$(dotnet msbuild "$project" -nologo -getProperty:PackageVersion | tr -d '\r' | sed '/^[[:space:]]*$/d' | tail -n 1)"
+          consumer="$(mktemp -d)"
+
+          dotnet new console --framework net10.0 --output "$consumer"
+          consumer_project="$(find "$consumer" -maxdepth 1 -name '*.csproj' -print -quit)"
+
+          if [ -z "$consumer_project" ]; then
+            echo "Projeto consumidor Dapper temporário não foi criado."
+            exit 1
+          fi
+
+          dotnet add "$consumer_project" package Brazilian.PrimitivesTypes.Dapper.SqlServer \
+            --version "$version" \
+            --no-restore
+
+          cat > "$consumer/NuGet.Config" <<EOF
+          <?xml version="1.0" encoding="utf-8"?>
+          <configuration>
+            <packageSources>
+              <clear />
+              <add key="local" value="$GITHUB_WORKSPACE/artifacts/packages" />
+              <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
+            </packageSources>
+            <packageSourceMapping>
+              <packageSource key="local">
+                <package pattern="Brazilian.PrimitivesTypes*" />
+              </packageSource>
+              <packageSource key="nuget.org">
+                <package pattern="Dapper" />
+              </packageSource>
+            </packageSourceMapping>
+          </configuration>
+          EOF
+
+          dotnet restore "$consumer_project" --configfile "$consumer/NuGet.Config"
+
+          cat > "$consumer/Program.cs" <<'EOF'
+          using Brazilian.PrimitivesTypes;
+          using Brazilian.PrimitivesTypes.Dapper.SqlServer;
+
+          BrazilianPrimitivesDapperSqlServer.Register();
+          _ = Cpf.Parse("529.982.247-25");
+          Console.WriteLine("Brazilian.PrimitivesTypes.Dapper.SqlServer package consumed successfully.");
+          EOF
+
+          dependency_graph="$(dotnet list "$consumer_project" package --include-transitive)"
+          echo "$dependency_graph"
+
+          if grep -Fq 'Microsoft.EntityFrameworkCore' <<< "$dependency_graph"; then
+            echo "O pacote Dapper não pode introduzir Entity Framework Core direta ou transitivamente."
+            exit 1
+          fi
 
           dotnet build "$consumer_project" --configuration Release --no-restore
 
