@@ -99,22 +99,28 @@ jobs:
         env:
           PACKAGE_VERSION: ${{ steps.version.outputs.package_version }}
         run: |
-          project='src/Brazilian.PrimitivesTypes/Brazilian.PrimitivesTypes.csproj'
+          projects=(
+            'src/Brazilian.PrimitivesTypes/Brazilian.PrimitivesTypes.csproj'
+            'src/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer.csproj'
+            'src/Brazilian.PrimitivesTypes.Dapper.SqlServer/Brazilian.PrimitivesTypes.Dapper.SqlServer.csproj'
+          )
 
-          resolved_version="$(dotnet msbuild "$project" -nologo -getProperty:Version -p:Version="$PACKAGE_VERSION" \
-            | tr -d '\r' | sed '/^[[:space:]]*$/d' | tail -n 1)"
-          resolved_package_version="$(dotnet msbuild "$project" -nologo -getProperty:PackageVersion -p:Version="$PACKAGE_VERSION" \
-            | tr -d '\r' | sed '/^[[:space:]]*$/d' | tail -n 1)"
+          for project in "${projects[@]}"; do
+            resolved_version="$(dotnet msbuild "$project" -nologo -getProperty:Version -p:Version="$PACKAGE_VERSION" \
+              | tr -d '\r' | sed '/^[[:space:]]*$/d' | tail -n 1)"
+            resolved_package_version="$(dotnet msbuild "$project" -nologo -getProperty:PackageVersion -p:Version="$PACKAGE_VERSION" \
+              | tr -d '\r' | sed '/^[[:space:]]*$/d' | tail -n 1)"
 
-          if [ "$resolved_version" != "$PACKAGE_VERSION" ]; then
-            echo "::error::Resolved Version '$resolved_version' differs from release version '$PACKAGE_VERSION'."
-            exit 1
-          fi
+            if [ "$resolved_version" != "$PACKAGE_VERSION" ]; then
+              echo "::error::$project resolved Version '$resolved_version' differs from release version '$PACKAGE_VERSION'."
+              exit 1
+            fi
 
-          if [ "$resolved_package_version" != "$PACKAGE_VERSION" ]; then
-            echo "::error::Resolved PackageVersion '$resolved_package_version' differs from release version '$PACKAGE_VERSION'."
-            exit 1
-          fi
+            if [ "$resolved_package_version" != "$PACKAGE_VERSION" ]; then
+              echo "::error::$project resolved PackageVersion '$resolved_package_version' differs from release version '$PACKAGE_VERSION'."
+              exit 1
+            fi
+          done
 
       - name: Build Release
         env:
@@ -142,6 +148,11 @@ jobs:
             --no-build \
             --output artifacts/packages \
             -p:Version="$PACKAGE_VERSION"
+          dotnet pack src/Brazilian.PrimitivesTypes.Dapper.SqlServer/Brazilian.PrimitivesTypes.Dapper.SqlServer.csproj \
+            --configuration Release \
+            --no-build \
+            --output artifacts/packages \
+            -p:Version="$PACKAGE_VERSION"
 
       - name: Validate packages, versions, assembly metadata, symbols and Source Link
         env:
@@ -154,6 +165,16 @@ jobs:
           dotnet run --file scripts/verify-package.cs -- artifacts/packages \
             --package-id Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer \
             --expected-dependency Brazilian.PrimitivesTypes \
+            --require-source-link \
+            --expected-version "$PACKAGE_VERSION"
+          dotnet run --file scripts/verify-package.cs -- artifacts/packages \
+            --package-id Brazilian.PrimitivesTypes.Dapper.SqlServer \
+            --expected-dependency Brazilian.PrimitivesTypes \
+            --require-source-link \
+            --expected-version "$PACKAGE_VERSION"
+          dotnet run --file scripts/verify-package.cs -- artifacts/packages \
+            --package-id Brazilian.PrimitivesTypes.Dapper.SqlServer \
+            --expected-dependency Dapper \
             --require-source-link \
             --expected-version "$PACKAGE_VERSION"
 
