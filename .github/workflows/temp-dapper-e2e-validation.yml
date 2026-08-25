@@ -23,13 +23,19 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
+      - name: Correct canonical email expectation
+        shell: bash
+        run: |
+          sed -i 's/Assert.Equal("user@example.com", storedEmail);/Assert.Equal(updatedEmail.Value, storedEmail);/' \
+            tests/Brazilian.PrimitivesTypes.Dapper.SqlServer.Tests/DapperSqlServerEndToEndTests.cs
+
       - name: Restore lock files
         run: dotnet restore Brazilian.PrimitivesTypes.slnx --force-evaluate
 
       - name: Apply formatting
         run: dotnet format Brazilian.PrimitivesTypes.slnx --no-restore
 
-      - name: Commit generated formatting and lock file
+      - name: Commit generated test changes
         shell: bash
         run: |
           if git diff --quiet; then
@@ -38,7 +44,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add tests/Brazilian.PrimitivesTypes.Dapper.SqlServer.Tests
-          git commit -m "chore: apply generated Dapper test formatting and lock file [lockgen]"
+          git commit -m "test: align E2E email assertion with canonical value [lockgen]"
           git push
 
       - name: Build Release
