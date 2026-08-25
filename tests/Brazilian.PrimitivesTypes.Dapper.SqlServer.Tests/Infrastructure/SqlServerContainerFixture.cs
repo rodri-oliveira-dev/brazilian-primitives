@@ -17,7 +17,11 @@ public sealed class SqlServerContainerFixture : IAsyncLifetime
         await using SqlConnection connection = new(_container.GetConnectionString());
         await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using SqlCommand command = connection.CreateCommand();
-        command.CommandText = $"CREATE DATABASE [{databaseName}]";
+        command.CommandText = """
+            DECLARE @sql nvarchar(max) = N'CREATE DATABASE ' + QUOTENAME(@databaseName);
+            EXEC sys.sp_executesql @sql;
+            """;
+        command.Parameters.AddWithValue("@databaseName", databaseName);
         await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
 
         return new SqlServerDatabase(_container.GetConnectionString(), databaseName);
@@ -48,14 +52,24 @@ internal sealed class SqlServerDatabase : IAsyncDisposable
         ConnectionString = builder.ConnectionString;
     }
 
-    internal string ConnectionString { get; }
+    internal string ConnectionString
+    {
+        get;
+    }
 
     public async ValueTask DisposeAsync()
     {
         await using SqlConnection connection = new(_masterConnectionString);
         await connection.OpenAsync().ConfigureAwait(false);
         await using SqlCommand command = connection.CreateCommand();
-        command.CommandText = $"ALTER DATABASE [{_databaseName}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE [{_databaseName}];";
+        command.CommandText = """
+            DECLARE @quotedDatabaseName nvarchar(258) = QUOTENAME(@databaseName);
+            DECLARE @sql nvarchar(max) =
+                N'ALTER DATABASE ' + @quotedDatabaseName +
+                N' SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE ' + @quotedDatabaseName + N';';
+            EXEC sys.sp_executesql @sql;
+            """;
+        command.Parameters.AddWithValue("@databaseName", _databaseName);
         await command.ExecuteNonQueryAsync().ConfigureAwait(false);
     }
 }
