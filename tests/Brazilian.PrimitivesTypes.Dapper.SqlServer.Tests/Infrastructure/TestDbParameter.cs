@@ -1,4 +1,5 @@
 using System.Data;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Brazilian.PrimitivesTypes.Dapper.SqlServer.Tests.Infrastructure;
 
@@ -18,13 +19,15 @@ internal sealed class TestDbParameter : IDbDataParameter
 
     public bool IsNullable => true;
 
-    public string? ParameterName
+    [AllowNull]
+    public string ParameterName
     {
         get;
         set;
     } = string.Empty;
 
-    public string? SourceColumn
+    [AllowNull]
+    public string SourceColumn
     {
         get;
         set;
