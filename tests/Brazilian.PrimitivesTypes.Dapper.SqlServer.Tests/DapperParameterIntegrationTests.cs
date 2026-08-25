@@ -61,7 +61,7 @@ public sealed class DapperParameterIntegrationTests
     }
 
     [Fact]
-    public void NullableAnonymousParametersPreserveValueAndNullAsDbNull()
+    public void NullableAnonymousParametersUseRegisteredHandlerForValueAndNull()
     {
         BrazilianPrimitivesDapperSqlServer.Register();
         Cpf cpf = Cpf.Parse("529.982.247-25", CultureInfo.InvariantCulture);
@@ -76,21 +76,22 @@ public sealed class DapperParameterIntegrationTests
             });
 
         AssertParameter(connection, "Cpf", "52998224725", DbType.AnsiString, 11);
-        TestDbParameter emailParameter = GetParameter(connection, "Email");
-        Assert.Equal(DBNull.Value, emailParameter.Value);
+        AssertParameter(connection, "Email", DBNull.Value, DbType.AnsiString, 254);
     }
 
     [Fact]
-    public void NullableDynamicParameterWithNullProducesDbNull()
+    public void DynamicParametersWithUntypedNullUseNativeDbNullBehavior()
     {
-        BrazilianPrimitivesDapperSqlServer.Register();
         DynamicParameters parameters = new();
         parameters.Add("Cpf", (Cpf?)null);
         TestDbConnection connection = new();
 
         connection.Execute("SELECT 1 WHERE @Cpf IS NULL;", parameters);
 
-        Assert.Equal(DBNull.Value, GetParameter(connection, "Cpf").Value);
+        TestDbParameter parameter = GetParameter(connection, "Cpf");
+        Assert.Equal(DBNull.Value, parameter.Value);
+        Assert.Equal(DbType.Object, parameter.DbType);
+        Assert.Equal(0, parameter.Size);
     }
 
     [Fact]
