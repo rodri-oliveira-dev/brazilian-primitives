@@ -9,31 +9,18 @@ internal static class ChavePixCanonicalValueParser
     {
         ArgumentNullException.ThrowIfNull(value);
 
-        if (value.StartsWith("+55", StringComparison.Ordinal))
+        return value switch
         {
-            return ChavePix.From(MobilePhone.Parse(value, CultureInfo.InvariantCulture));
-        }
-
-        if (value.Contains('@'))
-        {
-            return ChavePix.From(Email.Parse(value, CultureInfo.InvariantCulture));
-        }
-
-        if (value.Length == 11)
-        {
-            return ChavePix.From(Cpf.Parse(value, CultureInfo.InvariantCulture));
-        }
-
-        if (value.Length == 14)
-        {
-            return ChavePix.From(Cnpj.Parse(value, CultureInfo.InvariantCulture));
-        }
-
-        if (value.Length == 36)
-        {
-            return ChavePix.FromChaveAleatoria(value);
-        }
-
-        throw new FormatException("Persisted Pix key is not in a supported canonical representation.");
+            { Length: 14 } when value.StartsWith("+55", StringComparison.Ordinal) =>
+                ChavePix.From(MobilePhone.Parse(value, CultureInfo.InvariantCulture)),
+            { Length: 11 } =>
+                ChavePix.From(Cpf.Parse(value, CultureInfo.InvariantCulture)),
+            { Length: 14 } =>
+                ChavePix.From(Cnpj.Parse(value, CultureInfo.InvariantCulture)),
+            { Length: 36 } => ChavePix.FromChaveAleatoria(value),
+            _ when value.Contains('@') =>
+                ChavePix.From(Email.Parse(value, CultureInfo.InvariantCulture)),
+            _ => throw new FormatException("Persisted Pix key is not in a supported canonical representation."),
+        };
     }
 }
