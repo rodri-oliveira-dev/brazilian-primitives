@@ -1,0 +1,48 @@
+name: Temporary Dapper E2E validation
+
+on:
+  push:
+    branches:
+      - test/dapper-sqlserver-e2e
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    if: ${{ !contains(github.event.head_commit.message, '[lockgen]') }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Configure .NET 10
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore lock files
+        run: dotnet restore Brazilian.PrimitivesTypes.slnx --force-evaluate
+
+      - name: Verify formatting
+        run: dotnet format Brazilian.PrimitivesTypes.slnx --verify-no-changes --no-restore
+
+      - name: Build Release
+        run: dotnet build Brazilian.PrimitivesTypes.slnx --configuration Release --no-restore
+
+      - name: Run tests
+        run: dotnet test Brazilian.PrimitivesTypes.slnx --configuration Release --no-build
+
+      - name: Commit generated lock file
+        shell: bash
+        run: |
+          if git diff --quiet -- tests/Brazilian.PrimitivesTypes.Dapper.SqlServer.Tests/packages.lock.json; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tests/Brazilian.PrimitivesTypes.Dapper.SqlServer.Tests/packages.lock.json
+          git commit -m "chore: refresh Dapper test lock file [lockgen]"
+          git push
