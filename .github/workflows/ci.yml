@@ -291,8 +291,28 @@ jobs:
 
           dotnet add "$consumer_project" package Brazilian.PrimitivesTypes.Dapper.SqlServer \
             --version "$version" \
-            --source "$GITHUB_WORKSPACE/artifacts/packages" \
-            --source https://api.nuget.org/v3/index.json
+            --no-restore
+
+          cat > "$consumer/NuGet.Config" <<EOF
+          <?xml version="1.0" encoding="utf-8"?>
+          <configuration>
+            <packageSources>
+              <clear />
+              <add key="local" value="$GITHUB_WORKSPACE/artifacts/packages" />
+              <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
+            </packageSources>
+            <packageSourceMapping>
+              <packageSource key="local">
+                <package pattern="Brazilian.PrimitivesTypes*" />
+              </packageSource>
+              <packageSource key="nuget.org">
+                <package pattern="Dapper" />
+              </packageSource>
+            </packageSourceMapping>
+          </configuration>
+          EOF
+
+          dotnet restore "$consumer_project" --configfile "$consumer/NuGet.Config"
 
           cat > "$consumer/Program.cs" <<'EOF'
           using Brazilian.PrimitivesTypes;
