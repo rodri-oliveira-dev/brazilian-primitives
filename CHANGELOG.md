@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - `Brazilian.PrimitivesTypes.Dapper.SqlServer` Dapper integration with type handlers for all 20 supported value objects, canonical `Value` persistence, explicit ANSI `varchar(n)` parameter metadata, stable Pix canonical rehydration, repeatable global handler registration, and Value-only `Rg`/`InscricaoEstadual` semantics.
+- Complete Portuguese and English Dapper + SQL Server consumer guides covering registration, `SqlConnection`, CRUD parameters, nullable values, `DynamicParameters`, recommended `varchar(n)` schema, list-expansion limitations, Value-only RG/IE semantics, EF Core comparison, and NuGet Trusted Publishing prerequisites.
 - `Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer` project/package boundary for optional Entity Framework Core SQL Server integration, with provider-specific naming, isolated dependency direction, Central Package Management, and locked restore support.
 - SQL Server integration test foundation in `Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer.Tests`, using `Testcontainers.MsSql`, a pinned SQL Server 2022 container image, shared xUnit fixture lifecycle, dynamic connection strings, and a real EF Core relational smoke test.
 - SQL Server `ValueConverter` mappings for scalar Brazilian primitive types, with canonical `Value` persistence, invariant-preserving rehydration, ASCII `varchar(n)` mapping hints, nullable-property support, and real SQL Server round-trip coverage.
@@ -49,6 +50,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- CI and release packaging now build, validate, consume, and publish `Brazilian.PrimitivesTypes.Dapper.SqlServer` together with the existing packages; the local consumer validation also rejects accidental transitive Entity Framework Core dependencies.
 - Renamed the technical library identity to `Brazilian.PrimitivesTypes`, including solution, project paths, NuGet
   `PackageId`, assembly/root namespace, C# namespaces, tests, scripts, workflows, and documentation.
 - Migration for existing consumers is manual: replace package references to `Brazilian.Primitives` with
