@@ -1,65 +1,86 @@
 using System.Data;
+using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Brazilian.PrimitivesTypes.Dapper.SqlServer.Tests.Infrastructure;
 
-internal sealed class TestDbParameter : IDbDataParameter
+internal sealed class TestDbParameter : DbParameter
 {
-    public DbType DbType
+    public override DbType DbType
     {
         get;
         set;
     }
 
-    public ParameterDirection Direction
+    public override ParameterDirection Direction
     {
         get;
         set;
     } = ParameterDirection.Input;
 
-    public bool IsNullable => true;
+    public override bool IsNullable
+    {
+        get;
+        set;
+    } = true;
 
     [AllowNull]
-    public string ParameterName
+    public override string ParameterName
     {
         get;
         set;
     } = string.Empty;
 
     [AllowNull]
-    public string SourceColumn
+    public override string SourceColumn
     {
         get;
         set;
     } = string.Empty;
 
-    public DataRowVersion SourceVersion
-    {
-        get;
-        set;
-    } = DataRowVersion.Current;
-
-    public object? Value
+    public override object? Value
     {
         get;
         set;
     } = DBNull.Value;
 
-    public byte Precision
+    public override bool SourceColumnNullMapping
     {
         get;
         set;
     }
 
-    public byte Scale
+    public override int Size
     {
         get;
         set;
     }
 
-    public int Size
+    public override byte Precision
     {
         get;
         set;
     }
+
+    public override byte Scale
+    {
+        get;
+        set;
+    }
+
+    internal TestDbParameter Snapshot() => new()
+    {
+        DbType = DbType,
+        Direction = Direction,
+        IsNullable = IsNullable,
+        ParameterName = ParameterName,
+        SourceColumn = SourceColumn,
+        Value = Value,
+        SourceColumnNullMapping = SourceColumnNullMapping,
+        Size = Size,
+        Precision = Precision,
+        Scale = Scale,
+    };
+
+    public override void ResetDbType() => DbType = default;
 }
