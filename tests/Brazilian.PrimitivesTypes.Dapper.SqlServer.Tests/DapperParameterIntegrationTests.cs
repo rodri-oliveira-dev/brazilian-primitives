@@ -134,9 +134,8 @@ public sealed class DapperParameterIntegrationTests
                 Cpfs = cpfs,
             });
 
-        TestDbCommand command = Assert.IsType<TestDbCommand>(connection.LastCommand);
-        Assert.Contains("@Cpfs1", command.CommandText, StringComparison.Ordinal);
-        Assert.Contains("@Cpfs2", command.CommandText, StringComparison.Ordinal);
+        Assert.Contains("@Cpfs1", connection.LastCommandText, StringComparison.Ordinal);
+        Assert.Contains("@Cpfs2", connection.LastCommandText, StringComparison.Ordinal);
 
         // Dapper 2.1.x expands IEnumerable parameters natively, but PackListParameters does not invoke
         // ITypeHandler.SetValue for each item. The package deliberately exposes this upstream limitation
@@ -158,10 +157,8 @@ public sealed class DapperParameterIntegrationTests
             ReaderFactory = () => CreateSingleValueTable("Value", "not-an-email").CreateDataReader(),
         };
 
-        DataException exception = Assert.Throws<DataException>(
+        Assert.Throws<FormatException>(
             () => connection.QuerySingle<Email>("SELECT Value FROM PrimitiveValues;"));
-
-        Assert.IsType<FormatException>(exception.InnerException);
     }
 
     [Fact]
@@ -195,12 +192,11 @@ public sealed class DapperParameterIntegrationTests
                 InscricaoEstadual = inscricao,
             });
 
-        TestDbCommand command = Assert.IsType<TestDbCommand>(connection.LastCommand);
-        Assert.Equal(2, command.CapturedParameters.Count);
+        Assert.Equal(2, connection.LastParameters.Count);
         AssertParameter(connection, "Rg", rg.Value, DbType.AnsiString, 10);
         AssertParameter(connection, "InscricaoEstadual", inscricao.Value, DbType.AnsiString, 14);
         Assert.DoesNotContain(
-            command.CapturedParameters.Cast<TestDbParameter>(),
+            connection.LastParameters,
             parameter => parameter.ParameterName.Contains("State", StringComparison.OrdinalIgnoreCase)
                 || parameter.ParameterName.Contains("Uf", StringComparison.OrdinalIgnoreCase));
 
@@ -232,11 +228,9 @@ public sealed class DapperParameterIntegrationTests
         Assert.Equal(expectedSize, parameter.Size);
     }
 
-    private static TestDbParameter GetParameter(TestDbConnection connection, string name)
-    {
-        TestDbCommand command = Assert.IsType<TestDbCommand>(connection.LastCommand);
-        return Assert.IsType<TestDbParameter>(command.CapturedParameters[name]);
-    }
+    private static TestDbParameter GetParameter(TestDbConnection connection, string name) =>
+        connection.LastParameters.Single(
+            parameter => string.Equals(parameter.ParameterName, name, StringComparison.OrdinalIgnoreCase));
 
     private static DataTable CreateSingleValueTable(string columnName, string value)
     {
