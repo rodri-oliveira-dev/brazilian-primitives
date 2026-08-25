@@ -74,7 +74,9 @@ internal sealed class TestDbParameterCollection : DbParameterCollection
     protected override DbParameter GetParameter(string parameterName)
     {
         int index = IndexOf(parameterName);
-        return index >= 0 ? parameters[index] : throw new IndexOutOfRangeException(parameterName);
+        return index >= 0
+            ? parameters[index]
+            : throw new KeyNotFoundException($"Parameter '{parameterName}' was not found.");
     }
 
     protected override void SetParameter(int index, DbParameter value)
