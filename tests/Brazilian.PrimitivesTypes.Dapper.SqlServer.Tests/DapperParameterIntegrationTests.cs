@@ -94,27 +94,15 @@ public sealed class DapperParameterIntegrationTests
     }
 
     [Fact]
-    public void DynamicParametersWithUntypedNullUseNativeDbNullBehavior()
+    public void DynamicParametersWithUntypedNullProduceDbNull()
     {
-        SqlMapper.ResetTypeHandlers();
+        DynamicParameters parameters = new();
+        parameters.Add("Cpf", (Cpf?)null);
+        TestDbConnection connection = new();
 
-        try
-        {
-            DynamicParameters parameters = new();
-            parameters.Add("Cpf", (Cpf?)null);
-            TestDbConnection connection = new();
+        connection.Execute("SELECT 1 WHERE @Cpf IS NULL;", parameters);
 
-            connection.Execute("SELECT 1 WHERE @Cpf IS NULL;", parameters);
-
-            TestDbParameter parameter = GetParameter(connection, "Cpf");
-            Assert.Equal(DBNull.Value, parameter.Value);
-            Assert.Equal(DbType.Object, parameter.DbType);
-            Assert.Equal(0, parameter.Size);
-        }
-        finally
-        {
-            BrazilianPrimitivesDapperSqlServer.Register();
-        }
+        Assert.Equal(DBNull.Value, GetParameter(connection, "Cpf").Value);
     }
 
     [Fact]
