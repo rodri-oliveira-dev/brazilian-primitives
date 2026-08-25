@@ -18,6 +18,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Brazilian.PrimitivesTypes.Dapper.SqlServer.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="../Brazilian.PrimitivesTypes/Brazilian.PrimitivesTypes.csproj" />
     <PackageReference Include="Dapper" />
   </ItemGroup>
