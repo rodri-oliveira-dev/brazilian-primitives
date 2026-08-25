@@ -68,5 +68,19 @@ internal sealed class TestDbParameter : DbParameter
         set;
     }
 
+    internal TestDbParameter Snapshot() => new()
+    {
+        DbType = DbType,
+        Direction = Direction,
+        IsNullable = IsNullable,
+        ParameterName = ParameterName,
+        SourceColumn = SourceColumn,
+        Value = Value,
+        SourceColumnNullMapping = SourceColumnNullMapping,
+        Size = Size,
+        Precision = Precision,
+        Scale = Scale,
+    };
+
     public override void ResetDbType() => DbType = default;
 }
