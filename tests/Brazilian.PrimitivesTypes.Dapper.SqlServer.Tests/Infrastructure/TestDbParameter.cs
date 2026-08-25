@@ -18,13 +18,13 @@ internal sealed class TestDbParameter : IDbDataParameter
 
     public bool IsNullable => true;
 
-    public string ParameterName
+    public string? ParameterName
     {
         get;
         set;
     } = string.Empty;
 
-    public string SourceColumn
+    public string? SourceColumn
     {
         get;
         set;
@@ -36,7 +36,7 @@ internal sealed class TestDbParameter : IDbDataParameter
         set;
     } = DataRowVersion.Current;
 
-    public object Value
+    public object? Value
     {
         get;
         set;
