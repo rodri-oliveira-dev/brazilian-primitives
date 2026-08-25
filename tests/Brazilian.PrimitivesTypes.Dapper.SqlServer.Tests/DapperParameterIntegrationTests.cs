@@ -16,13 +16,28 @@ public sealed class DapperParameterIntegrationTests
         Cpf cpf = Cpf.Parse("529.982.247-25", CultureInfo.InvariantCulture);
         TestDbConnection connection = new();
 
-        connection.Execute("INSERT INTO People (Cpf) VALUES (@Cpf);", new { Cpf = cpf });
+        connection.Execute(
+            "INSERT INTO People (Cpf) VALUES (@Cpf);",
+            new
+            {
+                Cpf = cpf,
+            });
         AssertCpfParameter(connection, "52998224725");
 
-        connection.Execute("UPDATE People SET Cpf = @Cpf WHERE Id = 1;", new { Cpf = cpf });
+        connection.Execute(
+            "UPDATE People SET Cpf = @Cpf WHERE Id = 1;",
+            new
+            {
+                Cpf = cpf,
+            });
         AssertCpfParameter(connection, "52998224725");
 
-        connection.Execute("SELECT 1 FROM People WHERE Cpf = @Cpf;", new { Cpf = cpf });
+        connection.Execute(
+            "SELECT 1 FROM People WHERE Cpf = @Cpf;",
+            new
+            {
+                Cpf = cpf,
+            });
         AssertCpfParameter(connection, "52998224725");
     }
 
@@ -37,7 +52,9 @@ public sealed class DapperParameterIntegrationTests
         parameters.Add("Email", email);
         TestDbConnection connection = new();
 
-        connection.Execute("UPDATE People SET Email = @Email WHERE Cpf = @Cpf;", parameters);
+        connection.Execute(
+            "UPDATE People SET Email = @Email WHERE Cpf = @Cpf;",
+            parameters);
 
         AssertParameter(connection, "Cpf", "52998224725", DbType.AnsiString, 11);
         AssertParameter(connection, "Email", "usuario@xn--domnio-5va.com", DbType.AnsiString, 254);
@@ -50,7 +67,12 @@ public sealed class DapperParameterIntegrationTests
         Cpf? cpf = Cpf.Parse("529.982.247-25", CultureInfo.InvariantCulture);
         TestDbConnection connection = new();
 
-        connection.Execute("SELECT 1 FROM People WHERE Cpf = @Cpf;", new { Cpf = cpf });
+        connection.Execute(
+            "SELECT 1 FROM People WHERE Cpf = @Cpf;",
+            new
+            {
+                Cpf = cpf,
+            });
 
         AssertParameter(connection, "Cpf", "52998224725", DbType.AnsiString, 11);
     }
@@ -61,7 +83,12 @@ public sealed class DapperParameterIntegrationTests
         BrazilianPrimitivesDapperSqlServer.Register();
         TestDbConnection connection = new();
 
-        connection.Execute("SELECT 1 WHERE @Email IS NULL;", new { Email = (Email?)null });
+        connection.Execute(
+            "SELECT 1 WHERE @Email IS NULL;",
+            new
+            {
+                Email = (Email?)null,
+            });
 
         Assert.Equal(DBNull.Value, GetParameter(connection, "Email").Value);
     }
@@ -101,7 +128,12 @@ public sealed class DapperParameterIntegrationTests
 
         connection.Execute(
             "INSERT INTO People (Cpf, Email, Cep) VALUES (@Cpf, @Email, @Cep);",
-            new { Cpf = cpf, Email = email, Cep = cep });
+            new
+            {
+                Cpf = cpf,
+                Email = email,
+                Cep = cep,
+            });
 
         AssertParameter(connection, "Cpf", "52998224725", DbType.AnsiString, 11);
         AssertParameter(connection, "Email", "user@example.com", DbType.AnsiString, 254);
@@ -119,7 +151,12 @@ public sealed class DapperParameterIntegrationTests
         ];
         TestDbConnection connection = new();
 
-        connection.Execute("SELECT 1 FROM People WHERE Cpf IN @Cpfs;", new { Cpfs = cpfs });
+        connection.Execute(
+            "SELECT 1 FROM People WHERE Cpf IN @Cpfs;",
+            new
+            {
+                Cpfs = cpfs,
+            });
 
         Assert.Contains("@Cpfs1", connection.LastCommandText, StringComparison.Ordinal);
         Assert.Contains("@Cpfs2", connection.LastCommandText, StringComparison.Ordinal);
@@ -144,7 +181,8 @@ public sealed class DapperParameterIntegrationTests
             ReaderFactory = () => CreateSingleValueTable("Value", "not-an-email").CreateDataReader(),
         };
 
-        Assert.Throws<FormatException>(() => connection.QuerySingle<Email>("SELECT Value FROM PrimitiveValues;"));
+        Assert.Throws<FormatException>(
+            () => connection.QuerySingle<Email>("SELECT Value FROM PrimitiveValues;"));
     }
 
     [Fact]
@@ -154,7 +192,12 @@ public sealed class DapperParameterIntegrationTests
         TestDbConnection connection = new();
 
         Assert.Throws<InvalidOperationException>(
-            () => connection.Execute("INSERT INTO People (Cpf) VALUES (@Cpf);", new { Cpf = default(Cpf) }));
+            () => connection.Execute(
+                "INSERT INTO People (Cpf) VALUES (@Cpf);",
+                new
+                {
+                    Cpf = default(Cpf),
+                }));
     }
 
     [Fact]
@@ -167,7 +210,11 @@ public sealed class DapperParameterIntegrationTests
 
         connection.Execute(
             "INSERT INTO Documents (Rg, InscricaoEstadual) VALUES (@Rg, @InscricaoEstadual);",
-            new { Rg = rg, InscricaoEstadual = inscricao });
+            new
+            {
+                Rg = rg,
+                InscricaoEstadual = inscricao,
+            });
 
         Assert.Equal(2, connection.LastParameters.Count);
         AssertParameter(connection, "Rg", rg.Value, DbType.AnsiString, 10);
