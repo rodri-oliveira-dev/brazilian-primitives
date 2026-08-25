@@ -6,6 +6,7 @@ namespace Brazilian.PrimitivesTypes.Dapper.SqlServer.Tests.Infrastructure;
 
 internal sealed class TestDbConnection : DbConnection
 {
+    private readonly List<TestDbParameter> lastParameters = [];
     private ConnectionState state = ConnectionState.Closed;
 
     [AllowNull]
@@ -41,11 +42,13 @@ internal sealed class TestDbConnection : DbConnection
         set;
     } = 1;
 
-    internal TestDbCommand? LastCommand
+    internal string LastCommandText
     {
         get;
         private set;
-    }
+    } = string.Empty;
+
+    internal IReadOnlyList<TestDbParameter> LastParameters => lastParameters;
 
     public override void ChangeDatabase(string databaseName)
     {
@@ -56,12 +59,17 @@ internal sealed class TestDbConnection : DbConnection
 
     public override void Open() => state = ConnectionState.Open;
 
+    internal void Capture(TestDbCommand command)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+
+        LastCommandText = command.CommandText;
+        lastParameters.Clear();
+        lastParameters.AddRange(command.CapturedParameters.Cast<TestDbParameter>().Select(parameter => parameter.Snapshot()));
+    }
+
     protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel) =>
         throw new NotSupportedException("Transactions are not required by these tests.");
 
-    protected override DbCommand CreateDbCommand()
-    {
-        LastCommand = new TestDbCommand(this);
-        return LastCommand;
-    }
+    protected override DbCommand CreateDbCommand() => new TestDbCommand(this);
 }
