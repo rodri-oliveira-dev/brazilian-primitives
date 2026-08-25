@@ -1,0 +1,7 @@
+<Project>
+  <Import Project="../../Directory.Packages.props" />
+
+  <ItemGroup>
+    <PackageVersion Include="Dapper" Version="2.1.79" />
+  </ItemGroup>
+</Project>
