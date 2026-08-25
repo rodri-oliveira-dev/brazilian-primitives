@@ -192,7 +192,7 @@ public sealed class DapperSqlServerEndToEndTests
 
         Assert.Equal(updatedCpf, queried);
         Assert.Equal("11144477735", storedCpf);
-        Assert.Equal("user@example.com", storedEmail);
+        Assert.Equal(updatedEmail.Value, storedEmail);
     }
 
     [Fact]
