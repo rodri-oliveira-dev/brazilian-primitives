@@ -78,7 +78,10 @@ public sealed class DapperSqlServerEndToEndTests
 
         StoredPrimitiveRow stored = await connection.QuerySingleAsync<StoredPrimitiveRow>(
             SelectPrimitiveRoundTripSql,
-            new { Id = 1 });
+            new
+            {
+                Id = 1
+            });
 
         Assert.Equal("52998224725", stored.Cpf);
         Assert.Equal("00000000E08G12", stored.Cnpj);
@@ -103,7 +106,10 @@ public sealed class DapperSqlServerEndToEndTests
 
         MaterializedPrimitiveRow materialized = await connection.QuerySingleAsync<MaterializedPrimitiveRow>(
             SelectPrimitiveRoundTripSql,
-            new { Id = 1 });
+            new
+            {
+                Id = 1
+            });
 
         Assert.Equal(cpf, materialized.Cpf);
         Assert.Equal(cnpj, materialized.Cnpj);
@@ -150,7 +156,11 @@ public sealed class DapperSqlServerEndToEndTests
 
         await connection.ExecuteAsync(
             "INSERT INTO [CpfFlow] ([Id], [Cpf], [Email]) VALUES (@Id, @Cpf, NULL);",
-            new { Id = 1, Cpf = originalCpf });
+            new
+            {
+                Id = 1,
+                Cpf = originalCpf
+            });
 
         DynamicParameters parameters = new();
         parameters.Add("Id", 1);
@@ -163,13 +173,22 @@ public sealed class DapperSqlServerEndToEndTests
 
         Cpf queried = await connection.QuerySingleAsync<Cpf>(
             "SELECT [Cpf] FROM [CpfFlow] WHERE [Cpf] = @Cpf;",
-            new { Cpf = updatedCpf });
+            new
+            {
+                Cpf = updatedCpf
+            });
         string storedCpf = await connection.QuerySingleAsync<string>(
             "SELECT [Cpf] FROM [CpfFlow] WHERE [Id] = @Id;",
-            new { Id = 1 });
+            new
+            {
+                Id = 1
+            });
         string storedEmail = await connection.QuerySingleAsync<string>(
             "SELECT [Email] FROM [CpfFlow] WHERE [Id] = @Id;",
-            new { Id = 1 });
+            new
+            {
+                Id = 1
+            });
 
         Assert.Equal(updatedCpf, queried);
         Assert.Equal("11144477735", storedCpf);
@@ -193,17 +212,33 @@ public sealed class DapperSqlServerEndToEndTests
 
         await connection.ExecuteAsync(
             "INSERT INTO [NullableFlow] ([Id], [Cpf], [Email]) VALUES (@Id, @Cpf, @Email);",
-            new { Id = 1, Cpf = cpf, Email = email });
+            new
+            {
+                Id = 1,
+                Cpf = cpf,
+                Email = email
+            });
         await connection.ExecuteAsync(
             "INSERT INTO [NullableFlow] ([Id], [Cpf], [Email]) VALUES (@Id, @Cpf, @Email);",
-            new { Id = 2, Cpf = (Cpf?)null, Email = (Email?)null });
+            new
+            {
+                Id = 2,
+                Cpf = (Cpf?)null,
+                Email = (Email?)null
+            });
 
         NullablePrimitiveRow withValues = await connection.QuerySingleAsync<NullablePrimitiveRow>(
             "SELECT [Cpf], [Email] FROM [NullableFlow] WHERE [Id] = @Id;",
-            new { Id = 1 });
+            new
+            {
+                Id = 1
+            });
         NullablePrimitiveRow withNulls = await connection.QuerySingleAsync<NullablePrimitiveRow>(
             "SELECT [Cpf], [Email] FROM [NullableFlow] WHERE [Id] = @Id;",
-            new { Id = 2 });
+            new
+            {
+                Id = 2
+            });
 
         Assert.Equal(cpf, withValues.Cpf);
         Assert.Equal(email, withValues.Email);
@@ -223,7 +258,10 @@ public sealed class DapperSqlServerEndToEndTests
         await connection.ExecuteAsync("CREATE TABLE [InvalidEmail] ([Value] varchar(254) NOT NULL);");
         await connection.ExecuteAsync(
             "INSERT INTO [InvalidEmail] ([Value]) VALUES (@Value);",
-            new { Value = "not-an-email" });
+            new
+            {
+                Value = "not-an-email"
+            });
 
         await Assert.ThrowsAsync<FormatException>(
             () => connection.QuerySingleAsync<Email>("SELECT [Value] FROM [InvalidEmail];"));
@@ -353,38 +391,107 @@ public sealed class DapperSqlServerEndToEndTests
 
     private sealed class MaterializedPrimitiveRow
     {
-        public Cpf Cpf { get; set; }
-        public Cnpj Cnpj { get; set; }
-        public CpfCnpj CpfCnpj { get; set; }
-        public Cep Cep { get; set; }
-        public Email Email { get; set; }
-        public MobilePhone MobilePhone { get; set; }
-        public LandlinePhone LandlinePhone { get; set; }
-        public TelefoneBrasileiro TelefoneBrasileiro { get; set; }
-        public ChavePix ChavePix { get; set; }
-        public Cnh Cnh { get; set; }
-        public Cns Cns { get; set; }
-        public TituloEleitoral TituloEleitoral { get; set; }
-        public Nit Nit { get; set; }
-        public PisPasep PisPasep { get; set; }
-        public PlacaVeiculo PlacaVeiculo { get; set; }
-        public Renavam Renavam { get; set; }
-        public Ispb Ispb { get; set; }
-        public CodigoCompe CodigoCompe { get; set; }
-        public Rg Rg { get; set; }
-        public InscricaoEstadual InscricaoEstadual { get; set; }
+        public Cpf Cpf
+        {
+            get; set;
+        }
+        public Cnpj Cnpj
+        {
+            get; set;
+        }
+        public CpfCnpj CpfCnpj
+        {
+            get; set;
+        }
+        public Cep Cep
+        {
+            get; set;
+        }
+        public Email Email
+        {
+            get; set;
+        }
+        public MobilePhone MobilePhone
+        {
+            get; set;
+        }
+        public LandlinePhone LandlinePhone
+        {
+            get; set;
+        }
+        public TelefoneBrasileiro TelefoneBrasileiro
+        {
+            get; set;
+        }
+        public ChavePix ChavePix
+        {
+            get; set;
+        }
+        public Cnh Cnh
+        {
+            get; set;
+        }
+        public Cns Cns
+        {
+            get; set;
+        }
+        public TituloEleitoral TituloEleitoral
+        {
+            get; set;
+        }
+        public Nit Nit
+        {
+            get; set;
+        }
+        public PisPasep PisPasep
+        {
+            get; set;
+        }
+        public PlacaVeiculo PlacaVeiculo
+        {
+            get; set;
+        }
+        public Renavam Renavam
+        {
+            get; set;
+        }
+        public Ispb Ispb
+        {
+            get; set;
+        }
+        public CodigoCompe CodigoCompe
+        {
+            get; set;
+        }
+        public Rg Rg
+        {
+            get; set;
+        }
+        public InscricaoEstadual InscricaoEstadual
+        {
+            get; set;
+        }
     }
 
     private sealed class NullablePrimitiveRow
     {
-        public Cpf? Cpf { get; set; }
-        public Email? Email { get; set; }
+        public Cpf? Cpf
+        {
+            get; set;
+        }
+        public Email? Email
+        {
+            get; set;
+        }
     }
 
     private sealed class ColumnMetadata
     {
         public string ColumnName { get; set; } = string.Empty;
         public string DataType { get; set; } = string.Empty;
-        public int? MaxLength { get; set; }
+        public int? MaxLength
+        {
+            get; set;
+        }
     }
 }
