@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- `Brazilian.PrimitivesTypes.Dapper.SqlServer` Dapper integration with type handlers for all 20 supported value objects, canonical `Value` persistence, explicit ANSI `varchar(n)` parameter metadata, stable Pix canonical rehydration, repeatable global handler registration, and Value-only `Rg`/`InscricaoEstadual` semantics.
 - `Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer` project/package boundary for optional Entity Framework Core SQL Server integration, with provider-specific naming, isolated dependency direction, Central Package Management, and locked restore support.
 - SQL Server integration test foundation in `Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer.Tests`, using `Testcontainers.MsSql`, a pinned SQL Server 2022 container image, shared xUnit fixture lifecycle, dynamic connection strings, and a real EF Core relational smoke test.
 - SQL Server `ValueConverter` mappings for scalar Brazilian primitive types, with canonical `Value` persistence, invariant-preserving rehydration, ASCII `varchar(n)` mapping hints, nullable-property support, and real SQL Server round-trip coverage.
