@@ -5,10 +5,10 @@
     <IsPackable>true</IsPackable>
     <EnablePackageValidation>true</EnablePackageValidation>
     <PackageId>Brazilian.PrimitivesTypes.Dapper.SqlServer</PackageId>
+    <Title>Brazilian Primitives Types - Dapper SQL Server</Title>
+    <Description>Dapper SQL Server integration for Brazilian.PrimitivesTypes. Provides TypeHandler registrations that persist canonical Brazilian value-object values with explicit ANSI varchar metadata and materialize supported primitives directly from queries.</Description>
+    <PackageTags>brazil;brazilian;cpf;cnpj;cep;dapper;sql-server;type-handler;type-handlers;parameters;value-objects;ddd;dotnet</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <Description>Dapper SQL Server integration for Brazilian.PrimitivesTypes value objects.</Description>
-    <RepositoryType>git</RepositoryType>
-    <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <RootNamespace>Brazilian.PrimitivesTypes.Dapper.SqlServer</RootNamespace>
 
     <GenerateDocumentationFile>true</GenerateDocumentationFile>

@@ -5,10 +5,11 @@
     <IsPackable>true</IsPackable>
     <EnablePackageValidation>true</EnablePackageValidation>
     <PackageId>Brazilian.PrimitivesTypes</PackageId>
+    <Title>Brazilian Primitives Types - Brazilian Value Objects for .NET</Title>
+    <Description>Strongly typed, immutable .NET value objects for Brazilian identifiers and domain data, including CPF, CNPJ, CEP, Pix keys, phone numbers, vehicle identifiers, RG, state registrations, and more. Provides validation, normalization, parsing, and formatting without persistence-framework dependencies.</Description>
+    <PackageTags>brazil;brazilian;cpf;cnpj;cep;pix;rg;validation;value-objects;domain-driven-design;ddd;primitives;dotnet</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <Description>Immutable .NET value objects for validating and normalizing Brazilian domain identifiers such as CPF, CNPJ, CEP, Pix keys, phone numbers, vehicle records, and state-aware registrations.</Description>
-    <RepositoryType>git</RepositoryType>
-    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <PackageIcon>nuget-icon.png</PackageIcon>
 
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <DebugType>portable</DebugType>
@@ -20,5 +21,6 @@
     <None Include="../../README.md" Pack="true" PackagePath="/" />
     <None Include="../../README.pt-BR.md" Pack="true" PackagePath="/" />
     <None Include="../../README.en.md" Pack="true" PackagePath="/" />
+    <None Include="resource/nuget-icon.png" Pack="true" PackagePath="/" />
   </ItemGroup>
 </Project>
