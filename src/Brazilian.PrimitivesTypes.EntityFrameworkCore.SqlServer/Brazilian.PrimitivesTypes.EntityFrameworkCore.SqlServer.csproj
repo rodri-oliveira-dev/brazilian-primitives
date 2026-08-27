@@ -5,11 +5,11 @@
     <IsPackable>true</IsPackable>
     <EnablePackageValidation>true</EnablePackageValidation>
     <PackageId>Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer</PackageId>
+    <Title>Brazilian Primitives Types - Entity Framework Core SQL Server</Title>
+    <Description>Entity Framework Core SQL Server integration for Brazilian.PrimitivesTypes. Provides conventions and value converters for persisting Brazilian value objects with provider-aware varchar mappings, including state-aware RG and InscricaoEstadual mappings.</Description>
+    <PackageTags>brazil;brazilian;cpf;cnpj;cep;entity-framework-core;ef-core;sql-server;value-converters;value-objects;ddd;dotnet</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>nuget-icon.png</PackageIcon>
-    <Description>Entity Framework Core SQL Server integration for Brazilian.PrimitivesTypes value objects.</Description>
-    <RepositoryType>git</RepositoryType>
-    <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <RootNamespace>Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer</RootNamespace>
 
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
