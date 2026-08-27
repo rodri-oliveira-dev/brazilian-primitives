@@ -1,34 +1,27 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - 'v*.*.*'
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version (for example v1.0.0 or v1.1.0-beta.1)'
+        description: 'Semantic version without the v prefix (for example 1.0.0 or 1.1.0-beta.1)'
         required: true
         type: string
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: release
   cancel-in-progress: false
 
 jobs:
   build-and-pack:
     name: Validate, build, test and pack
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
     outputs:
       package-version: ${{ steps.version.outputs.package_version }}
       release-tag: ${{ steps.version.outputs.release_tag }}
-      should-publish: ${{ steps.version.outputs.should_publish }}
-      is-manual-release: ${{ steps.version.outputs.is_manual_release }}
-      safe-to-publish: ${{ steps.package.outputs.safe_to_publish }}
-      nuget-publishing-enabled: ${{ steps.nuget-publishing.outputs.nuget_publishing_enabled }}
-      nuget-publishing-reason: ${{ steps.nuget-publishing.outputs.nuget_publishing_reason }}
 
     steps:
       - name: Checkout
@@ -37,68 +30,63 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Configure .NET 10
+      - name: Setup .NET
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
-          dotnet-version: '10.0.x'
+          global-json-file: global.json
 
-      - name: Validate release request
+      - name: Validate release version
         id: version
         shell: bash
         env:
-          EVENT_NAME: ${{ github.event_name }}
-          MANUAL_VERSION: ${{ inputs.version }}
-          REF_NAME: ${{ github.ref_name }}
-          REF_TYPE: ${{ github.ref_type }}
-          RELEASE_BRANCH: main
-        run: bash scripts/resolve-release-request.sh
-
-      - name: Restore local tools
-        run: dotnet tool restore
-
-      - name: Restore dependencies in locked mode
-        run: dotnet restore Brazilian.PrimitivesTypes.slnx --locked-mode
-
-      - name: Validate package identity for publication
-        id: package
-        shell: bash
+          VERSION: ${{ inputs.version }}
         run: |
-          project='src/Brazilian.PrimitivesTypes/Brazilian.PrimitivesTypes.csproj'
-          package_id="$(dotnet msbuild "$project" -nologo -getProperty:PackageId \
-            | tr -d '\r' \
-            | sed '/^[[:space:]]*$/d' \
-            | tail -n 1)"
+          set -euo pipefail
 
-          if [ -z "$package_id" ]; then
-            echo '::error::PackageId could not be resolved.'
+          if [[ "$GITHUB_REF" != "refs/heads/main" ]]; then
+            echo "::error::Releases must be started from the main branch. Current ref: $GITHUB_REF"
             exit 1
           fi
 
-          placeholder_package_id="Template"".""Library"
-          safe_to_publish=true
-
-          if [ "$package_id" = "$placeholder_package_id" ]; then
-            safe_to_publish=false
-            echo 'Source-template package identity detected. NuGet publication will be skipped.'
+          if [[ "$VERSION" == v* ]]; then
+            echo "::error::Enter the semantic version without the 'v' prefix (for example 1.0.0)."
+            exit 1
           fi
 
-          echo "package_id=$package_id" >> "$GITHUB_OUTPUT"
-          echo "safe_to_publish=$safe_to_publish" >> "$GITHUB_OUTPUT"
+          semver='^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$'
+          if [[ ! "$VERSION" =~ $semver ]]; then
+            echo "::error::Invalid semantic version '$VERSION'. Expected a value such as 1.0.0 or 1.1.0-beta.1."
+            exit 1
+          fi
 
-      - name: Resolve NuGet publishing opt-in
-        id: nuget-publishing
-        shell: bash
-        env:
-          SHOULD_PUBLISH: ${{ steps.version.outputs.should_publish }}
-          SAFE_TO_PUBLISH: ${{ steps.package.outputs.safe_to_publish }}
-          NUGET_USER: ${{ vars.NUGET_USER }}
-        run: bash scripts/resolve-nuget-publishing.sh
+          release_tag="v$VERSION"
+
+          git fetch --tags --force
+          if git rev-parse -q --verify "refs/tags/$release_tag" >/dev/null; then
+            tag_sha="$(git rev-list -n 1 "$release_tag")"
+            if [[ "$tag_sha" != "$GITHUB_SHA" ]]; then
+              echo "::error::Tag '$release_tag' already exists and points to $tag_sha instead of $GITHUB_SHA."
+              exit 1
+            fi
+
+            echo "Tag '$release_tag' already exists on the validated commit; this run can be safely retried."
+          fi
+
+          echo "package_version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "release_tag=$release_tag" >> "$GITHUB_OUTPUT"
+          echo "Release version: $VERSION"
+          echo "Release tag: $release_tag"
+
+      - name: Restore
+        run: dotnet restore Brazilian.PrimitivesTypes.slnx --locked-mode
 
       - name: Validate resolved MSBuild version
         shell: bash
         env:
           PACKAGE_VERSION: ${{ steps.version.outputs.package_version }}
         run: |
+          set -euo pipefail
+
           projects=(
             'src/Brazilian.PrimitivesTypes/Brazilian.PrimitivesTypes.csproj'
             'src/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer.csproj'
@@ -106,23 +94,21 @@ jobs:
           )
 
           for project in "${projects[@]}"; do
-            resolved_version="$(dotnet msbuild "$project" -nologo -getProperty:Version -p:Version="$PACKAGE_VERSION" \
-              | tr -d '\r' | sed '/^[[:space:]]*$/d' | tail -n 1)"
-            resolved_package_version="$(dotnet msbuild "$project" -nologo -getProperty:PackageVersion -p:Version="$PACKAGE_VERSION" \
-              | tr -d '\r' | sed '/^[[:space:]]*$/d' | tail -n 1)"
+            resolved_version="$(dotnet msbuild "$project" -nologo -getProperty:Version -p:Version="$PACKAGE_VERSION" -p:PackageVersion="$PACKAGE_VERSION"               | tr -d '\r' | sed '/^[[:space:]]*$/d' | tail -n 1)"
+            resolved_package_version="$(dotnet msbuild "$project" -nologo -getProperty:PackageVersion -p:Version="$PACKAGE_VERSION" -p:PackageVersion="$PACKAGE_VERSION"               | tr -d '\r' | sed '/^[[:space:]]*$/d' | tail -n 1)"
 
-            if [ "$resolved_version" != "$PACKAGE_VERSION" ]; then
+            if [[ "$resolved_version" != "$PACKAGE_VERSION" ]]; then
               echo "::error::$project resolved Version '$resolved_version' differs from release version '$PACKAGE_VERSION'."
               exit 1
             fi
 
-            if [ "$resolved_package_version" != "$PACKAGE_VERSION" ]; then
+            if [[ "$resolved_package_version" != "$PACKAGE_VERSION" ]]; then
               echo "::error::$project resolved PackageVersion '$resolved_package_version' differs from release version '$PACKAGE_VERSION'."
               exit 1
             fi
           done
 
-      - name: Build Release
+      - name: Build release
         env:
           PACKAGE_VERSION: ${{ steps.version.outputs.package_version }}
         run: >-
@@ -130,55 +116,66 @@ jobs:
           --configuration Release
           --no-restore
           -p:Version="$PACKAGE_VERSION"
+          -p:PackageVersion="$PACKAGE_VERSION"
 
       - name: Run tests
         run: dotnet test Brazilian.PrimitivesTypes.slnx --configuration Release --no-build
 
-      - name: Pack release artifacts
+      - name: Pack release
         env:
           PACKAGE_VERSION: ${{ steps.version.outputs.package_version }}
         run: |
-          dotnet pack src/Brazilian.PrimitivesTypes/Brazilian.PrimitivesTypes.csproj \
-            --configuration Release \
-            --no-build \
-            --output artifacts/packages \
-            -p:Version="$PACKAGE_VERSION"
-          dotnet pack src/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer.csproj \
-            --configuration Release \
-            --no-build \
-            --output artifacts/packages \
-            -p:Version="$PACKAGE_VERSION"
-          dotnet pack src/Brazilian.PrimitivesTypes.Dapper.SqlServer/Brazilian.PrimitivesTypes.Dapper.SqlServer.csproj \
-            --configuration Release \
-            --no-build \
-            --output artifacts/packages \
-            -p:Version="$PACKAGE_VERSION"
+          dotnet pack src/Brazilian.PrimitivesTypes/Brazilian.PrimitivesTypes.csproj             --configuration Release             --no-build             --output artifacts/packages             -p:Version="$PACKAGE_VERSION"             -p:PackageVersion="$PACKAGE_VERSION"
 
-      - name: Validate packages, versions, assembly metadata, symbols and Source Link
+          dotnet pack src/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer.csproj             --configuration Release             --no-build             --output artifacts/packages             -p:Version="$PACKAGE_VERSION"             -p:PackageVersion="$PACKAGE_VERSION"
+
+          dotnet pack src/Brazilian.PrimitivesTypes.Dapper.SqlServer/Brazilian.PrimitivesTypes.Dapper.SqlServer.csproj             --configuration Release             --no-build             --output artifacts/packages             -p:Version="$PACKAGE_VERSION"             -p:PackageVersion="$PACKAGE_VERSION"
+
+      - name: Validate package identities and versions
+        shell: bash
         env:
           PACKAGE_VERSION: ${{ steps.version.outputs.package_version }}
         run: |
-          dotnet run --file scripts/verify-package.cs -- artifacts/packages \
-            --package-id Brazilian.PrimitivesTypes \
-            --require-source-link \
-            --expected-version "$PACKAGE_VERSION"
-          dotnet run --file scripts/verify-package.cs -- artifacts/packages \
-            --package-id Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer \
-            --expected-dependency Brazilian.PrimitivesTypes \
-            --require-source-link \
-            --expected-version "$PACKAGE_VERSION"
-          dotnet run --file scripts/verify-package.cs -- artifacts/packages \
-            --package-id Brazilian.PrimitivesTypes.Dapper.SqlServer \
-            --expected-dependency Brazilian.PrimitivesTypes \
-            --require-source-link \
-            --expected-version "$PACKAGE_VERSION"
-          dotnet run --file scripts/verify-package.cs -- artifacts/packages \
-            --package-id Brazilian.PrimitivesTypes.Dapper.SqlServer \
-            --expected-dependency Dapper \
-            --require-source-link \
-            --expected-version "$PACKAGE_VERSION"
+          set -euo pipefail
 
-      - name: Upload release artifacts
+          packages=(
+            'Brazilian.PrimitivesTypes|src/Brazilian.PrimitivesTypes/Brazilian.PrimitivesTypes.csproj'
+            'Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer|src/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer.csproj'
+            'Brazilian.PrimitivesTypes.Dapper.SqlServer|src/Brazilian.PrimitivesTypes.Dapper.SqlServer/Brazilian.PrimitivesTypes.Dapper.SqlServer.csproj'
+          )
+
+          for entry in "${packages[@]}"; do
+            package_id="${entry%%|*}"
+            project="${entry#*|}"
+            expected="artifacts/packages/${package_id}.${PACKAGE_VERSION}.nupkg"
+
+            if [[ ! -f "$expected" ]]; then
+              echo "::error::Expected package '$expected' was not produced."
+              find artifacts/packages -maxdepth 1 -type f -print || true
+              exit 1
+            fi
+
+            resolved_package_id="$(dotnet msbuild "$project" -nologo -getProperty:PackageId               | tr -d '\r' | sed '/^[[:space:]]*$/d' | tail -n 1)"
+
+            if [[ "$resolved_package_id" != "$package_id" ]]; then
+              echo "::error::Unexpected PackageId '$resolved_package_id' for '$project'. Expected '$package_id'."
+              exit 1
+            fi
+          done
+
+      - name: Validate packages, assembly metadata, symbols and Source Link
+        env:
+          PACKAGE_VERSION: ${{ steps.version.outputs.package_version }}
+        run: |
+          dotnet run --file scripts/verify-package.cs -- artifacts/packages             --package-id Brazilian.PrimitivesTypes             --require-source-link             --expected-version "$PACKAGE_VERSION"
+
+          dotnet run --file scripts/verify-package.cs -- artifacts/packages             --package-id Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer             --expected-dependency Brazilian.PrimitivesTypes             --require-source-link             --expected-version "$PACKAGE_VERSION"
+
+          dotnet run --file scripts/verify-package.cs -- artifacts/packages             --package-id Brazilian.PrimitivesTypes.Dapper.SqlServer             --expected-dependency Brazilian.PrimitivesTypes             --require-source-link             --expected-version "$PACKAGE_VERSION"
+
+          dotnet run --file scripts/verify-package.cs -- artifacts/packages             --package-id Brazilian.PrimitivesTypes.Dapper.SqlServer             --expected-dependency Dapper             --require-source-link             --expected-version "$PACKAGE_VERSION"
+
+      - name: Upload release packages
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: release-packages
@@ -189,7 +186,7 @@ jobs:
           retention-days: 7
 
   ensure-release-tag:
-    name: Ensure release tag
+    name: Create release tag
     needs: build-and-pack
     runs-on: ubuntu-latest
     permissions:
@@ -201,32 +198,47 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Create or verify release tag
+      - name: Create or verify tag
         shell: bash
         env:
-          IS_MANUAL_RELEASE: ${{ needs.build-and-pack.outputs.is-manual-release }}
           RELEASE_TAG: ${{ needs.build-and-pack.outputs.release-tag }}
           VALIDATED_SHA: ${{ github.sha }}
-        run: bash scripts/ensure-release-tag.sh
+        run: |
+          set -euo pipefail
+
+          git fetch --tags --force
+          if git rev-parse -q --verify "refs/tags/$RELEASE_TAG" >/dev/null; then
+            tag_sha="$(git rev-list -n 1 "$RELEASE_TAG")"
+            if [[ "$tag_sha" != "$VALIDATED_SHA" ]]; then
+              echo "::error::Tag '$RELEASE_TAG' points to $tag_sha instead of $VALIDATED_SHA."
+              exit 1
+            fi
+
+            echo "Tag '$RELEASE_TAG' already exists on the validated commit."
+            exit 0
+          fi
+
+          git tag "$RELEASE_TAG" "$VALIDATED_SHA"
+          git push origin "refs/tags/$RELEASE_TAG"
 
   publish-nuget:
     name: Publish to NuGet.org
     needs:
       - build-and-pack
       - ensure-release-tag
-    if: needs.build-and-pack.outputs.nuget-publishing-enabled == 'true'
     runs-on: ubuntu-latest
+    environment: release
     permissions:
       contents: read
       id-token: write
 
     steps:
-      - name: Configure .NET 10
+      - name: Setup .NET
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
           dotnet-version: '10.0.x'
 
-      - name: Download release artifacts
+      - name: Download release packages
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: release-packages
@@ -236,9 +248,9 @@ jobs:
         id: nuget-login
         uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2.0
         with:
-          user: ${{ vars.NUGET_USER }}
+          user: rodri-oliveira-dev
 
-      - name: Publish package and symbols
+      - name: Publish to NuGet.org
         env:
           NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
         run: >-
@@ -252,27 +264,24 @@ jobs:
     needs:
       - build-and-pack
       - ensure-release-tag
-    if: >-
-      needs.build-and-pack.outputs.should-publish == 'true' &&
-      needs.build-and-pack.outputs.safe-to-publish == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
 
     steps:
-      - name: Configure .NET 10
+      - name: Setup .NET
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
           dotnet-version: '10.0.x'
 
-      - name: Download release artifacts
+      - name: Download release packages
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: release-packages
           path: artifacts/packages
 
-      - name: Publish packages to GitHub Packages
+      - name: Publish to GitHub Packages
         env:
           GITHUB_PACKAGE_SOURCE: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
           GITHUB_PACKAGE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -289,61 +298,35 @@ jobs:
       - ensure-release-tag
       - publish-nuget
       - publish-github-packages
-    if: >-
-      always() &&
-      needs.build-and-pack.result == 'success' &&
-      needs.ensure-release-tag.result == 'success' &&
-      (
-        needs.build-and-pack.outputs.nuget-publishing-enabled != 'true' ||
-        needs.publish-nuget.result == 'success'
-      ) &&
-      (
-        needs.build-and-pack.outputs.should-publish != 'true' ||
-        needs.build-and-pack.outputs.safe-to-publish != 'true' ||
-        needs.publish-github-packages.result == 'success'
-      )
     runs-on: ubuntu-latest
     permissions:
       contents: write
 
     steps:
-      - name: Download package artifacts
-        if: ${{ needs.build-and-pack.outputs.safe-to-publish == 'true' }}
+      - name: Download release packages
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: release-packages
           path: artifacts/packages
 
-      - name: Create GitHub Release with package artifacts
-        if: ${{ needs.build-and-pack.outputs.safe-to-publish == 'true' }}
+      - name: Create or update GitHub Release
+        shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           RELEASE_TAG: ${{ needs.build-and-pack.outputs.release-tag }}
-        shell: bash
         run: |
+          set -euo pipefail
+
+          if gh release view "$RELEASE_TAG" --repo "$GH_REPO" >/dev/null 2>&1; then
+            echo "GitHub Release '$RELEASE_TAG' already exists; refreshing package artifacts."
+            gh release upload "$RELEASE_TAG"               artifacts/packages/*.nupkg               artifacts/packages/*.snupkg               --repo "$GH_REPO"               --clobber
+            exit 0
+          fi
+
           release_args=(--verify-tag --generate-notes --title "$RELEASE_TAG")
           if [[ "$RELEASE_TAG" == *-* ]]; then
             release_args+=(--prerelease)
           fi
 
-          gh release create "$RELEASE_TAG" \
-            --repo "$GH_REPO" \
-            artifacts/packages/*.nupkg \
-            artifacts/packages/*.snupkg \
-            "${release_args[@]}"
-
-      - name: Create source-template GitHub Release without package artifacts
-        if: ${{ needs.build-and-pack.outputs.safe-to-publish == 'false' }}
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: ${{ needs.build-and-pack.outputs.release-tag }}
-        shell: bash
-        run: |
-          release_args=(--verify-tag --generate-notes --title "$RELEASE_TAG")
-          if [[ "$RELEASE_TAG" == *-* ]]; then
-            release_args+=(--prerelease)
-          fi
-
-          gh release create "$RELEASE_TAG" --repo "$GH_REPO" "${release_args[@]}"
+          gh release create "$RELEASE_TAG"             artifacts/packages/*.nupkg             artifacts/packages/*.snupkg             --repo "$GH_REPO"             "${release_args[@]}"
