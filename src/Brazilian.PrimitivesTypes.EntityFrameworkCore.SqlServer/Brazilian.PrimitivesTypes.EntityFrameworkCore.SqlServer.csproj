@@ -6,6 +6,7 @@
     <EnablePackageValidation>true</EnablePackageValidation>
     <PackageId>Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer</PackageId>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>nuget-icon.png</PackageIcon>
     <Description>Entity Framework Core SQL Server integration for Brazilian.PrimitivesTypes value objects.</Description>
     <RepositoryType>git</RepositoryType>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
@@ -26,5 +27,6 @@
     <None Include="../../README.md" Pack="true" PackagePath="/" />
     <None Include="../../README.pt-BR.md" Pack="true" PackagePath="/" />
     <None Include="../../README.en.md" Pack="true" PackagePath="/" />
+    <None Include="resource/nuget-icon.png" Pack="true" PackagePath="/" />
   </ItemGroup>
 </Project>
