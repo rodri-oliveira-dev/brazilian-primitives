@@ -9,6 +9,7 @@
     <Description>Dapper SQL Server integration for Brazilian.PrimitivesTypes. Provides TypeHandler registrations that persist canonical Brazilian value-object values with explicit ANSI varchar metadata and materialize supported primitives directly from queries.</Description>
     <PackageTags>brazil;brazilian;cpf;cnpj;cep;dapper;sql-server;type-handler;type-handlers;parameters;value-objects;ddd;dotnet</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>nuget-icon.png</PackageIcon>
     <RootNamespace>Brazilian.PrimitivesTypes.Dapper.SqlServer</RootNamespace>
 
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -28,5 +29,6 @@
 
   <ItemGroup>
     <None Update="README.md" Pack="true" PackagePath="/" />
+    <None Include="resource/nuget-icon.png" Pack="true" PackagePath="/" />
   </ItemGroup>
 </Project>
