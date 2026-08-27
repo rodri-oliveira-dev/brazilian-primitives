@@ -1,4 +1,4 @@
-# Brazilian.PrimitivesTypes
+# Brazilian Primitives for .NET
 
 [![Build & Tests](https://github.com/rodri-oliveira-dev/brazilian-primitives/actions/workflows/ci.yml/badge.svg)](https://github.com/rodri-oliveira-dev/brazilian-primitives/actions/workflows/ci.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=rodri-oliveira-dev_brazilian-primitives&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=rodri-oliveira-dev_brazilian-primitives)
@@ -6,22 +6,51 @@
 [![Coverage](https://img.shields.io/badge/coverage-%E2%89%A570%25-brightgreen)](https://github.com/rodri-oliveira-dev/brazilian-primitives/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Idioma: Português do Brasil | [English](https://github.com/rodri-oliveira-dev/brazilian-primitives/blob/main/README.en.md)
+Idioma: Português do Brasil | [English](README.en.md)
 
-Brazilian.PrimitivesTypes é uma biblioteca .NET para modelar identificadores brasileiros como value objects imutáveis.
+Um ecossistema .NET para trabalhar com identificadores brasileiros como **value objects fortemente tipados**, com integrações opcionais para persistência.
 
-Ela valida e normaliza valores como CPF, CNPJ, CEP, chaves Pix, telefones brasileiros, placas, RENAVAM, CNH, CNS, título
-eleitoral, inscrição estadual e identificadores bancários sem fazer chamadas externas.
+O objetivo é manter o domínio independente de infraestrutura: use apenas os primitives quando precisar de validação e normalização, e adicione uma integração somente quando sua camada de persistência realmente precisar dela.
 
-## Instalação
+## Qual pacote devo instalar?
+
+| Pacote | Use quando |
+| --- | --- |
+| [`Brazilian.PrimitivesTypes`](https://www.nuget.org/packages/Brazilian.PrimitivesTypes) | Você precisa de CPF, CNPJ, CEP, Pix, telefones, documentos, veículos e outros tipos brasileiros sem dependência de persistência |
+| [`Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer`](https://www.nuget.org/packages/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer) | Sua aplicação usa Entity Framework Core com SQL Server |
+| [`Brazilian.PrimitivesTypes.Dapper.SqlServer`](https://www.nuget.org/packages/Brazilian.PrimitivesTypes.Dapper.SqlServer) | Sua aplicação usa Dapper com SQL Server |
+
+### Core
 
 ```bash
 dotnet add package Brazilian.PrimitivesTypes
 ```
 
-O repositório atual usa .NET 10.
+### Entity Framework Core + SQL Server
 
-## Exemplo Rápido
+```bash
+dotnet add package Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer
+```
+
+### Dapper + SQL Server
+
+```bash
+dotnet add package Brazilian.PrimitivesTypes.Dapper.SqlServer
+```
+
+## Arquitetura dos pacotes
+
+```text
+Brazilian.PrimitivesTypes
+├── Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer
+└── Brazilian.PrimitivesTypes.Dapper.SqlServer
+```
+
+`Brazilian.PrimitivesTypes` é o pacote de domínio. Ele não depende de EF Core, Dapper ou SQL Server.
+
+Os pacotes de integração dependem do Core e adicionam apenas o comportamento necessário para o mecanismo de persistência correspondente.
+
+## Exemplo rápido
 
 ```csharp
 using Brazilian.PrimitivesTypes;
@@ -37,82 +66,46 @@ Console.WriteLine(cep.Formatted);   // 01311-000
 Console.WriteLine(pix.Value);       // +5511987654321
 ```
 
-## Dapper + SQL Server
+## Primitivos disponíveis
 
-A integração com Dapper também é opcional e vive em um pacote separado:
-
-```bash
-dotnet add package Brazilian.PrimitivesTypes.Dapper.SqlServer
-```
-
-Registre os handlers uma vez no bootstrap da aplicação:
-
-```csharp
-using Brazilian.PrimitivesTypes.Dapper.SqlServer;
-
-BrazilianPrimitivesDapperSqlServer.Register();
-```
-
-Os handlers permitem usar os primitives diretamente em parâmetros escalares de `INSERT`, `UPDATE` e `WHERE`, além de materializá-los em `SELECT`. Eles enviam o `Value` canônico como `AnsiString` com o tamanho recomendado para `varchar(n)`.
-
-Dapper não cria schema nem migrations: a aplicação continua responsável pelas colunas SQL Server. `Rg` e `InscricaoEstadual` são **Value-only** nesta integração; a UF não é persistida nem recuperada. List expansion (`IN @Values`) de coleções de primitives não usa os handlers por item no Dapper 2.1.x e, por isso, não é declarada como cenário suportado.
-
-Consulte o guia completo de [Dapper com SQL Server](docs/pt-BR/dapper-sql-server.md) para instalação, `SqlConnection`, registro, `INSERT`, `SELECT`, `UPDATE`, filtros parametrizados, nullable, `DynamicParameters`, tabela completa de `varchar(n)` e diferenças em relação ao EF Core.
-
-## Entity Framework Core + SQL Server
-
-A integração com EF Core é opcional e vive em um pacote separado:
-
-```bash
-dotnet add package Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer
-```
-
-Ela persiste os `Value` canônicos em colunas SQL Server, respeita `T?` como SQL `NULL` e permite consultas LINQ usando os tipos fortes do domínio. RG e Inscrição Estadual suportam modos explícitos context-free e state-aware; nenhuma UF é inferida automaticamente.
-
-Consulte o guia completo de [Entity Framework Core com SQL Server](docs/pt-BR/entity-framework-core-sql-server.md) para o exemplo `Customer`, convenções globais, Fluent API, schema esperado, nullabilidade e persistência de `Rg`/`InscricaoEstadual` com e sem UF.
-
-## O Que a Biblioteca Faz
-
-- Representa identificadores brasileiros com tipos explícitos.
-- Preserva zeros à esquerda.
-- Aceita somente formatos documentados.
-- Normaliza valores canônicos de forma determinística.
-- Implementa dígitos verificadores locais quando o tipo realmente contém esse algoritmo.
-- Separa validade estrutural ou matemática de existência real.
-
-## Limites de Validação
-
-`IsValid`, `TryParse` e `Parse` são operações locais. Elas não consultam Receita Federal, Correios, Banco Central, DICT,
-Anatel, SENATRAN, DETRAN, TSE, CADSUS, SINTEGRA, SEFAZ, Caixa, Banco do Brasil, CNIS ou sistemas bancários.
-
-Um valor aceito pela biblioteca pode ter estrutura ou dígitos verificadores válidos e ainda assim não existir, não estar
-ativo, não pertencer a determinada pessoa ou empresa, não estar regular, não ser alcançável ou não estar vigente em uma
-base oficial.
-
-## Primitivos Suportados
-
-| Domínio | Tipo |
+| Domínio | Tipos |
 | --- | --- |
-| Documentos fiscais de pessoa física e jurídica | [`Cpf`](docs/pt-BR/primitives/cpf.md), [`Cnpj`](docs/pt-BR/primitives/cnpj.md), [`CpfCnpj`](docs/pt-BR/primitives/cpf-cnpj.md) |
-| Endereço e contato | [`Cep`](docs/pt-BR/primitives/cep.md), [`Email`](docs/pt-BR/primitives/email.md), [`LandlinePhone`](docs/pt-BR/primitives/landline-phone.md), [`MobilePhone`](docs/pt-BR/primitives/mobile-phone.md), [`TelefoneBrasileiro`](docs/pt-BR/primitives/telefone-brasileiro.md) |
-| Pix e bancos | [`ChavePix`](docs/pt-BR/primitives/chave-pix.md), [`Ispb`](docs/pt-BR/primitives/ispb.md), [`CodigoCompe`](docs/pt-BR/primitives/codigo-compe.md) |
-| Documentos civis, trabalhistas, saúde e eleitorais | [`Rg`](docs/pt-BR/primitives/rg.md), [`Cnh`](docs/pt-BR/primitives/cnh.md), [`Cns`](docs/pt-BR/primitives/cns.md), [`Nit`](docs/pt-BR/primitives/nit.md), [`PisPasep`](docs/pt-BR/primitives/pis-pasep.md), [`TituloEleitoral`](docs/pt-BR/primitives/titulo-eleitoral.md) |
-| Fiscal estadual e veículos | [`InscricaoEstadual`](docs/pt-BR/primitives/inscricao-estadual.md), [`PlacaVeiculo`](docs/pt-BR/primitives/placa-veiculo.md), [`Renavam`](docs/pt-BR/primitives/renavam.md) |
+| Documentos fiscais | `Cpf`, `Cnpj`, `CpfCnpj` |
+| Endereço e contato | `Cep`, `Email`, `LandlinePhone`, `MobilePhone`, `TelefoneBrasileiro` |
+| Pix e bancos | `ChavePix`, `Ispb`, `CodigoCompe` |
+| Documentos civis, trabalhistas, saúde e eleitorais | `Rg`, `Cnh`, `Cns`, `Nit`, `PisPasep`, `TituloEleitoral` |
+| Fiscal estadual e veículos | `InscricaoEstadual`, `PlacaVeiculo`, `Renavam` |
 
-Consulte o [inventário de primitivos](docs/pt-BR/primitives/index.md) para formatos canônicos, formatos aceitos,
-normalizações e modo de validação.
+Consulte o [inventário completo de primitivos](docs/pt-BR/primitives/index.md) para formatos aceitos, valores canônicos, normalização e regras de validação.
 
-## Design
+## Integrações
 
-A biblioteca segue um contrato conservador de value objects:
+### Entity Framework Core
 
-- entrada inválida falha na criação;
-- valores canônicos são armazenados como `string`, não como número;
-- igualdade usa o valor normalizado e, quando necessário, contexto explícito como `BrazilianState`;
-- instâncias `default` de structs não expõem valor válido;
-- nenhum tipo remove texto arbitrário para tentar encontrar um identificador dentro dele.
+A integração para SQL Server oferece conventions, value converters e Fluent API para persistir os primitives sem remover os tipos fortes do modelo de domínio.
 
-Leia mais em [Princípios de design](docs/pt-BR/design-principles.md).
+Veja o guia de [Entity Framework Core com SQL Server](docs/pt-BR/entity-framework-core-sql-server.md).
+
+### Dapper
+
+A integração Dapper registra `TypeHandler<T>` para enviar valores canônicos como parâmetros escalares e materializar os primitives diretamente das consultas.
+
+Veja o guia de [Dapper com SQL Server](docs/pt-BR/dapper-sql-server.md).
+
+## Limites de validação
+
+As validações são locais. A biblioteca não consulta Receita Federal, Correios, Banco Central, DICT, Anatel, SENATRAN, DETRAN, TSE, CADSUS, SINTEGRA, SEFAZ ou outras bases oficiais.
+
+Um valor aceito pode ser estrutural ou matematicamente válido e ainda assim não existir, não estar ativo ou não pertencer a uma pessoa ou empresa específica.
+
+## Documentação
+
+- [Documentação em Português do Brasil](docs/pt-BR)
+- [English documentation](docs/en)
+- [Princípios de design](docs/pt-BR/design-principles.md)
+- [Guia de contribuição](CONTRIBUTING.md)
+- [Changelog](CHANGELOG.md)
+- [Política de segurança](SECURITY.md)
 
 ## Desenvolvimento
 
@@ -124,18 +117,10 @@ dotnet build Brazilian.PrimitivesTypes.slnx --configuration Release --no-restore
 dotnet test Brazilian.PrimitivesTypes.slnx --configuration Release --no-build
 ```
 
-Validação dos pacotes:
+Para validar os pacotes localmente:
 
 ```bash
-dotnet pack src/Brazilian.PrimitivesTypes/Brazilian.PrimitivesTypes.csproj --configuration Release --no-build --output artifacts/packages
-dotnet pack src/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer.csproj --configuration Release --no-build --output artifacts/packages
-dotnet pack src/Brazilian.PrimitivesTypes.Dapper.SqlServer/Brazilian.PrimitivesTypes.Dapper.SqlServer.csproj --configuration Release --no-build --output artifacts/packages
-dotnet run --file scripts/verify-package.cs -- artifacts/packages --package-id Brazilian.PrimitivesTypes
-dotnet run --file scripts/verify-package.cs -- artifacts/packages --package-id Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer --expected-dependency Brazilian.PrimitivesTypes
-dotnet run --file scripts/verify-package.cs -- artifacts/packages --package-id Brazilian.PrimitivesTypes.Dapper.SqlServer --expected-dependency Brazilian.PrimitivesTypes
-dotnet run --file scripts/verify-package.cs -- artifacts/packages --package-id Brazilian.PrimitivesTypes.Dapper.SqlServer --expected-dependency Dapper
+dotnet pack src/Brazilian.PrimitivesTypes/Brazilian.PrimitivesTypes.csproj --configuration Release --output artifacts/packages
+dotnet pack src/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer.csproj --configuration Release --output artifacts/packages
+dotnet pack src/Brazilian.PrimitivesTypes.Dapper.SqlServer/Brazilian.PrimitivesTypes.Dapper.SqlServer.csproj --configuration Release --output artifacts/packages
 ```
-
-## Contribuição
-
-Veja [CONTRIBUTING.md](CONTRIBUTING.md), [CHANGELOG.md](CHANGELOG.md) e [SECURITY.md](SECURITY.md).
