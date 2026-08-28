@@ -121,15 +121,38 @@ jobs:
       - name: Run tests
         run: dotnet test Brazilian.PrimitivesTypes.slnx --configuration Release --no-build
 
-      - name: Pack release
+      - name: Pack Brazilian.PrimitivesTypes
         env:
           PACKAGE_VERSION: ${{ steps.version.outputs.package_version }}
-        run: |
-          dotnet pack src/Brazilian.PrimitivesTypes/Brazilian.PrimitivesTypes.csproj             --configuration Release             --no-build             --output artifacts/packages             -p:Version="$PACKAGE_VERSION"             -p:PackageVersion="$PACKAGE_VERSION"
+        run: >-
+          dotnet pack src/Brazilian.PrimitivesTypes/Brazilian.PrimitivesTypes.csproj
+          --configuration Release
+          --no-build
+          --output artifacts/packages
+          -p:Version="$PACKAGE_VERSION"
+          -p:PackageVersion="$PACKAGE_VERSION"
 
-          dotnet pack src/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer.csproj             --configuration Release             --no-build             --output artifacts/packages             -p:Version="$PACKAGE_VERSION"             -p:PackageVersion="$PACKAGE_VERSION"
+      - name: Pack Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer
+        env:
+          PACKAGE_VERSION: ${{ steps.version.outputs.package_version }}
+        run: >-
+          dotnet pack src/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer.csproj
+          --configuration Release
+          --no-build
+          --output artifacts/packages
+          -p:Version="$PACKAGE_VERSION"
+          -p:PackageVersion="$PACKAGE_VERSION"
 
-          dotnet pack src/Brazilian.PrimitivesTypes.Dapper.SqlServer/Brazilian.PrimitivesTypes.Dapper.SqlServer.csproj             --configuration Release             --no-build             --output artifacts/packages             -p:Version="$PACKAGE_VERSION"             -p:PackageVersion="$PACKAGE_VERSION"
+      - name: Pack Brazilian.PrimitivesTypes.Dapper.SqlServer
+        env:
+          PACKAGE_VERSION: ${{ steps.version.outputs.package_version }}
+        run: >-
+          dotnet pack src/Brazilian.PrimitivesTypes.Dapper.SqlServer/Brazilian.PrimitivesTypes.Dapper.SqlServer.csproj
+          --configuration Release
+          --no-build
+          --output artifacts/packages
+          -p:Version="$PACKAGE_VERSION"
+          -p:PackageVersion="$PACKAGE_VERSION"
 
       - name: Validate package identities and versions
         shell: bash
@@ -163,14 +186,29 @@ jobs:
             fi
           done
 
-      - name: Validate packages, assembly metadata, symbols and Source Link
+      - name: Validate Brazilian.PrimitivesTypes package
+        env:
+          PACKAGE_VERSION: ${{ steps.version.outputs.package_version }}
+        run: >-
+          dotnet run --file scripts/verify-package.cs -- artifacts/packages
+          --package-id Brazilian.PrimitivesTypes
+          --require-source-link
+          --expected-version "$PACKAGE_VERSION"
+
+      - name: Validate Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer package
+        env:
+          PACKAGE_VERSION: ${{ steps.version.outputs.package_version }}
+        run: >-
+          dotnet run --file scripts/verify-package.cs -- artifacts/packages
+          --package-id Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer
+          --expected-dependency Brazilian.PrimitivesTypes
+          --require-source-link
+          --expected-version "$PACKAGE_VERSION"
+
+      - name: Validate Brazilian.PrimitivesTypes.Dapper.SqlServer package
         env:
           PACKAGE_VERSION: ${{ steps.version.outputs.package_version }}
         run: |
-          dotnet run --file scripts/verify-package.cs -- artifacts/packages             --package-id Brazilian.PrimitivesTypes             --require-source-link             --expected-version "$PACKAGE_VERSION"
-
-          dotnet run --file scripts/verify-package.cs -- artifacts/packages             --package-id Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer             --expected-dependency Brazilian.PrimitivesTypes             --require-source-link             --expected-version "$PACKAGE_VERSION"
-
           dotnet run --file scripts/verify-package.cs -- artifacts/packages             --package-id Brazilian.PrimitivesTypes.Dapper.SqlServer             --expected-dependency Brazilian.PrimitivesTypes             --require-source-link             --expected-version "$PACKAGE_VERSION"
 
           dotnet run --file scripts/verify-package.cs -- artifacts/packages             --package-id Brazilian.PrimitivesTypes.Dapper.SqlServer             --expected-dependency Dapper             --require-source-link             --expected-version "$PACKAGE_VERSION"
@@ -250,11 +288,32 @@ jobs:
         with:
           user: rodri-oliveira-dev
 
-      - name: Publish to NuGet.org
+      - name: Publish Brazilian.PrimitivesTypes to NuGet.org
         env:
           NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
+          PACKAGE_VERSION: ${{ needs.build-and-pack.outputs.package-version }}
         run: >-
-          dotnet nuget push "artifacts/packages/*.nupkg"
+          dotnet nuget push "artifacts/packages/Brazilian.PrimitivesTypes.$PACKAGE_VERSION.nupkg"
+          --source https://api.nuget.org/v3/index.json
+          --api-key "$NUGET_API_KEY"
+          --skip-duplicate
+
+      - name: Publish Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer to NuGet.org
+        env:
+          NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
+          PACKAGE_VERSION: ${{ needs.build-and-pack.outputs.package-version }}
+        run: >-
+          dotnet nuget push "artifacts/packages/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer.$PACKAGE_VERSION.nupkg"
+          --source https://api.nuget.org/v3/index.json
+          --api-key "$NUGET_API_KEY"
+          --skip-duplicate
+
+      - name: Publish Brazilian.PrimitivesTypes.Dapper.SqlServer to NuGet.org
+        env:
+          NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
+          PACKAGE_VERSION: ${{ needs.build-and-pack.outputs.package-version }}
+        run: >-
+          dotnet nuget push "artifacts/packages/Brazilian.PrimitivesTypes.Dapper.SqlServer.$PACKAGE_VERSION.nupkg"
           --source https://api.nuget.org/v3/index.json
           --api-key "$NUGET_API_KEY"
           --skip-duplicate
@@ -281,12 +340,35 @@ jobs:
           name: release-packages
           path: artifacts/packages
 
-      - name: Publish to GitHub Packages
+      - name: Publish Brazilian.PrimitivesTypes to GitHub Packages
         env:
           GITHUB_PACKAGE_SOURCE: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
           GITHUB_PACKAGE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PACKAGE_VERSION: ${{ needs.build-and-pack.outputs.package-version }}
         run: >-
-          dotnet nuget push "artifacts/packages/*.nupkg"
+          dotnet nuget push "artifacts/packages/Brazilian.PrimitivesTypes.$PACKAGE_VERSION.nupkg"
+          --source "$GITHUB_PACKAGE_SOURCE"
+          --api-key "$GITHUB_PACKAGE_TOKEN"
+          --skip-duplicate
+
+      - name: Publish Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer to GitHub Packages
+        env:
+          GITHUB_PACKAGE_SOURCE: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
+          GITHUB_PACKAGE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PACKAGE_VERSION: ${{ needs.build-and-pack.outputs.package-version }}
+        run: >-
+          dotnet nuget push "artifacts/packages/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer.$PACKAGE_VERSION.nupkg"
+          --source "$GITHUB_PACKAGE_SOURCE"
+          --api-key "$GITHUB_PACKAGE_TOKEN"
+          --skip-duplicate
+
+      - name: Publish Brazilian.PrimitivesTypes.Dapper.SqlServer to GitHub Packages
+        env:
+          GITHUB_PACKAGE_SOURCE: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
+          GITHUB_PACKAGE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PACKAGE_VERSION: ${{ needs.build-and-pack.outputs.package-version }}
+        run: >-
+          dotnet nuget push "artifacts/packages/Brazilian.PrimitivesTypes.Dapper.SqlServer.$PACKAGE_VERSION.nupkg"
           --source "$GITHUB_PACKAGE_SOURCE"
           --api-key "$GITHUB_PACKAGE_TOKEN"
           --skip-duplicate
