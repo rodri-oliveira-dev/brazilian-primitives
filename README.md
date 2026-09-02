@@ -48,7 +48,9 @@ Brazilian.PrimitivesTypes
 
 `Brazilian.PrimitivesTypes` é o pacote de domínio. Ele não depende de EF Core, Dapper ou SQL Server.
 
-Os pacotes de integração dependem do Core e adicionam apenas o comportamento necessário para o mecanismo de persistência correspondente.
+Os pacotes de integração dependem do Core e adicionam apenas o comportamento necessário para o mecanismo de persistência correspondente. Esses limites são tratados como regras arquiteturais e protegidos por testes executados no CI.
+
+Veja a [arquitetura e os limites de dependência](docs/pt-BR/architecture.md) e os [Architecture Decision Records](docs/pt-BR/decisions/README.md).
 
 ## Exemplo rápido
 
@@ -103,6 +105,8 @@ Um valor aceito pode ser estrutural ou matematicamente válido e ainda assim nã
 - [Documentação em Português do Brasil](docs/pt-BR)
 - [English documentation](docs/en)
 - [Princípios de design](docs/pt-BR/design-principles.md)
+- [Arquitetura e limites de dependência](docs/pt-BR/architecture.md)
+- [Decisões arquiteturais (ADRs)](docs/pt-BR/decisions/README.md)
 - [Guia de contribuição](CONTRIBUTING.md)
 - [Changelog](CHANGELOG.md)
 - [Política de segurança](SECURITY.md)
