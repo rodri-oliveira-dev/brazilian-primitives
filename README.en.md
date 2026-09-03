@@ -116,6 +116,8 @@ The library follows a conservative value-object contract:
 
 Read more in [Design principles](docs/en/design-principles.md).
 
+The package dependency direction and its executable architecture constraints are documented in [Architecture](docs/en/architecture.md). Durable design choices are recorded as [Architecture Decision Records](docs/en/decisions/README.md).
+
 ## Development
 
 ```bash

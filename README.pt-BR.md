@@ -106,6 +106,8 @@ A biblioteca segue um contrato conservador de value objects:
 
 Leia mais em [Princípios de design](docs/pt-BR/design-principles.md).
 
+A direção das dependências entre pacotes e suas restrições arquiteturais executáveis estão documentadas em [Arquitetura](docs/pt-BR/architecture.md). Decisões duráveis são registradas como [Architecture Decision Records](docs/pt-BR/decisions/README.md).
+
 ## Desenvolvimento
 
 ```bash
