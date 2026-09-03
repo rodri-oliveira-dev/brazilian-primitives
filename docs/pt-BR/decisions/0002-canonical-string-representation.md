@@ -5,22 +5,29 @@
 
 ## Contexto
 
-Identificadores brasileiros frequentemente possuem zeros à esquerda significativos e são identificadores, não quantidades. Armazenamento numérico pode remover esses zeros e sugere semântica aritmética inexistente no domínio.
+Vários valores tratados pela biblioteca parecem números, mas não são números.
+
+CPF, CNPJ, CEP, códigos COMPE e outros identificadores podem conter zeros à esquerda significativos. Tratá-los como valores numéricos tornaria esses zeros fáceis de perder e ainda sugeriria uma semântica aritmética que não existe no domínio.
+
+A biblioteca também aceita alguns formatos mascarados. Se o texto original fornecido pelo chamador fosse mantido internamente, igualdade e persistência passariam a depender da forma de apresentação.
 
 ## Decisão
 
-Os primitives usam uma representação canônica em `string` como contrato de valor. O parsing pode aceitar formatos explicitamente documentados, mas uma construção válida produz um único valor canônico determinístico. A igualdade usa esse valor normalizado e o contexto explícito quando necessário.
+Um primitive válido expõe um único valor canônico em `string`.
 
-## Alternativas consideradas
+O parsing pode aceitar os formatos documentados, mas, depois que a construção é concluída com sucesso, o valor usado para igualdade e persistência é determinístico. Formatação é apresentação; o valor canônico é identidade.
 
-- Armazenar identificadores em tipos numéricos.
-- Preservar qualquer representação textual fornecida pelo chamador.
+Quando um primitive também exige contexto explícito, esse contexto participa da identidade separadamente da string canônica.
 
-O armazenamento numérico foi rejeitado porque pode perder zeros significativos. Preservar texto arbitrário foi rejeitado porque enfraquece igualdade e persistência determinísticas.
+## Alternativa
+
+A principal alternativa seria armazenar a entrada original e normalizar apenas na formatação ou persistência. Isso preservaria exatamente o que o chamador digitou, mas permitiria que identificadores equivalentes carregassem representações internas diferentes.
+
+Armazenamento numérico foi descartado porque perder um zero à esquerda é um erro de correção, não uma diferença de formatação.
 
 ## Consequências
 
-- Zeros à esquerda são preservados.
-- Igualdade e persistência usam representação estável.
-- Formatação permanece separada da identidade.
-- Adapters de persistência consomem o valor canônico do domínio em vez de criar representações específicas de provider.
+- Zeros à esquerda são preservados sem tratamentos especiais.
+- `529.982.247-25` e seu equivalente aceito sem máscara resultam no mesmo valor de CPF.
+- Os adapters de persistência recebem um único valor estável para armazenar.
+- Regras de formatação podem evoluir sem alterar o contrato de identidade.

@@ -5,24 +5,25 @@
 
 ## Contexto
 
-Alguns identificadores brasileiros não possuem uma única regra nacional de validação. Seu significado ou validação depende de contexto explícito, como a unidade federativa emissora. Inferir esse contexto pela string é ambíguo.
+Nem todo identificador brasileiro pode ser compreendido apenas pelo texto do próprio identificador.
+
+`Rg` e `InscricaoEstadual` são os exemplos mais claros neste repositório: as regras de validação podem depender da UF emissora. Para RG, São Paulo atualmente possui validação de dígito verificador, enquanto outros estados suportados podem ter apenas validação de formato. Inferir a UF pelo valor transformaria uma heurística de implementação em dado de domínio.
+
+As integrações de persistência expuseram o mesmo problema por outro ângulo. O adapter de EF Core consegue preservar mapeamentos state-aware, enquanto a integração Dapper atualmente documenta `Rg` e `InscricaoEstadual` como cenários value-only.
 
 ## Decisão
 
-Quando o contexto altera o significado ou o contrato de validação de um primitive, esse contexto é representado explicitamente e participa da identidade quando necessário.
+Quando o contexto é necessário para preservar o significado ou o contrato de validação de um primitive, esse contexto é explícito.
 
-Exemplos incluem `Rg` e `InscricaoEstadual` em modo state-aware. Primitives compostos como `CpfCnpj`, `ChavePix` e `TelefoneBrasileiro` expõem discriminadores em vez de exigir que o chamador infira o domínio pela string canônica.
+Para identificadores state-aware, a UF não é inferida pela string. Primitives compostos como `CpfCnpj`, `ChavePix` e `TelefoneBrasileiro` também expõem um discriminador, em vez de exigir que o consumidor redescubra o subtipo selecionado a partir do valor canônico.
 
 ## Alternativas consideradas
 
-- Inferir estado ou subtipo pelo formato do valor.
-- Armazenar somente o valor textual e deixar o consumidor controlar o contexto necessário separadamente.
-
-As duas foram rejeitadas quando o contexto é necessário para preservar o significado de domínio.
+Manter apenas a string e exigir que o chamador controle o contexto separadamente deixaria o tipo mais simples de construir, mas também mais fácil de usar de forma incorreta. Inferir contexto pelo formato do valor foi descartado porque não existe uma regra geral confiável para isso.
 
 ## Consequências
 
-- O significado de domínio permanece explícito.
-- A igualdade pode distinguir valores cujo contexto obrigatório difere.
-- Adapters de persistência devem documentar se preservam contexto ou operam em modo somente-valor.
-- Inferências não suportadas são evitadas.
+- Dois valores visualmente iguais podem continuar distintos quando o contexto de domínio obrigatório for diferente.
+- A validação não precisa depender de estado oculto ou heurísticas.
+- Adapters de persistência precisam declarar explicitamente se preservam contexto.
+- Persistência value-only continua possível onde estiver documentada, mas não é apresentada como equivalente à persistência state-aware.

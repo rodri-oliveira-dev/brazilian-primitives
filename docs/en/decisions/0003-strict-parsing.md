@@ -5,24 +5,26 @@
 
 ## Context
 
-Permissive sanitization can turn malformed or unrelated text into an apparently valid identifier. That hides input-quality problems and makes logs and caller intent harder to trust.
+It is tempting for an identifier library to remove every character it does not recognize and validate whatever remains.
+
+That behavior is convenient until input such as `"CPF: 529.982.247-25"` is silently treated as if the caller had supplied a supported CPF format. At that point the library is no longer only parsing an identifier; it is guessing which part of arbitrary text the caller intended to use.
+
+That also makes bad upstream data harder to spot.
 
 ## Decision
 
-Parsing accepts only documented shapes and normalization rules. Punctuation is removed only when that exact formatted shape is part of the public contract. The library does not search arbitrary text for digits or silently repair unsupported input.
+Parsing is intentionally strict.
 
-`Parse`, `TryParse`, and `IsValid` share the same validation semantics.
+Each primitive accepts only the shapes documented for that type. Punctuation is normalized when that formatted representation is part of the contract, but the library does not search free text for a value or repair unsupported input.
 
-## Alternatives considered
+`Parse`, `TryParse`, and `IsValid` follow the same rules.
 
-- Strip all non-alphanumeric characters before validation.
-- Attempt best-effort correction of malformed values.
+## What we are not doing
 
-Both were rejected because convenience would reduce predictability.
+We are not adding a generic “strip everything except digits/letters” preprocessing step. Callers that need to clean user-entered text can do so before constructing a primitive, where that policy is visible to the application.
 
 ## Consequences
 
-- Invalid input fails early and predictably.
-- Accepted values better reflect what the caller actually supplied.
-- New accepted formats require an explicit compatibility decision.
-- Parsing remains deterministic and testable.
+Invalid data tends to fail closer to where it entered the system, instead of being silently transformed into a different value.
+
+The trade-off is deliberate: accepting a new input shape requires an explicit library change and compatibility decision rather than becoming valid accidentally through sanitization.
