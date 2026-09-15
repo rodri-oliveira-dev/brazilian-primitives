@@ -22,6 +22,17 @@ Include enough detail to help maintainers reproduce and assess the issue:
 - a minimal reproduction or proof of concept;
 - expected impact and any known mitigations.
 
+## Automated Security and Dependency Maintenance
+
+The repository uses layered automated controls rather than relying on a single scanner:
+
+- Dependabot maintains NuGet packages, the .NET SDK declared by `global.json`, and GitHub Actions references;
+- CodeQL performs C# static security analysis;
+- Dependency Review evaluates dependency changes introduced by pull requests;
+- CI and SonarQube Cloud provide complementary build, test, quality, and analysis gates.
+
+.NET SDK updates are intentionally proposed as dedicated Dependabot pull requests so toolchain changes remain explicit and reviewable. Major SDK changes must be evaluated for compatibility before merge; the repository's `global.json` roll-forward and prerelease policy remains authoritative.
+
 ## Triage Expectations
 
 Maintainers should acknowledge and triage reports as soon as reasonably possible. Response and fix timelines depend on severity, maintainer availability, release complexity, and coordinated disclosure needs.
