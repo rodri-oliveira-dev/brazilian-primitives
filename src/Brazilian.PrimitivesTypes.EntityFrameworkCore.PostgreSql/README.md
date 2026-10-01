@@ -10,8 +10,9 @@ The dependency direction is intentionally one-way:
 
 ```text
 Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql
-  -> Brazilian.PrimitivesTypes
-  -> Npgsql.EntityFrameworkCore.PostgreSQL
+  ├─> Brazilian.PrimitivesTypes
+  ├─> Microsoft.EntityFrameworkCore.Relational
+  └─> Npgsql.EntityFrameworkCore.PostgreSQL
 ```
 
 The provider targets .NET 10 and uses the repository's Entity Framework Core 10 baseline.
