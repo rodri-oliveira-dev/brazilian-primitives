@@ -6,7 +6,7 @@
     <EnablePackageValidation>true</EnablePackageValidation>
     <PackageId>Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql</PackageId>
     <Title>Brazilian Primitives Types - Entity Framework Core PostgreSQL</Title>
-    <Description>Entity Framework Core PostgreSQL integration boundary for Brazilian.PrimitivesTypes. Provides the provider-specific package and dependency foundation for canonical Brazilian value-object persistence through Npgsql.</Description>
+    <Description>Entity Framework Core PostgreSQL/Npgsql integration for Brazilian.PrimitivesTypes, with canonical value converters, model-wide conventions, Fluent API mappings, CLR nullability support, strongly typed LINQ queries, and context-free/state-aware persistence for RG and Inscricao Estadual.</Description>
     <PackageTags>brazil;brazilian;cpf;cnpj;cep;entity-framework-core;ef-core;postgresql;npgsql;value-objects;ddd;dotnet</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>nuget-icon.png</PackageIcon>
