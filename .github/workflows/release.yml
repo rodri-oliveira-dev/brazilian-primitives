@@ -90,6 +90,7 @@ jobs:
           projects=(
             'src/Brazilian.PrimitivesTypes/Brazilian.PrimitivesTypes.csproj'
             'src/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer.csproj'
+            'src/Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql/Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql.csproj'
             'src/Brazilian.PrimitivesTypes.Dapper.SqlServer/Brazilian.PrimitivesTypes.Dapper.SqlServer.csproj'
           )
 
@@ -143,6 +144,17 @@ jobs:
           -p:Version="$PACKAGE_VERSION"
           -p:PackageVersion="$PACKAGE_VERSION"
 
+      - name: Pack Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql
+        env:
+          PACKAGE_VERSION: ${{ steps.version.outputs.package_version }}
+        run: >-
+          dotnet pack src/Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql/Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql.csproj
+          --configuration Release
+          --no-build
+          --output artifacts/packages
+          -p:Version="$PACKAGE_VERSION"
+          -p:PackageVersion="$PACKAGE_VERSION"
+
       - name: Pack Brazilian.PrimitivesTypes.Dapper.SqlServer
         env:
           PACKAGE_VERSION: ${{ steps.version.outputs.package_version }}
@@ -164,6 +176,7 @@ jobs:
           packages=(
             'Brazilian.PrimitivesTypes|src/Brazilian.PrimitivesTypes/Brazilian.PrimitivesTypes.csproj'
             'Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer|src/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer.csproj'
+            'Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql|src/Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql/Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql.csproj'
             'Brazilian.PrimitivesTypes.Dapper.SqlServer|src/Brazilian.PrimitivesTypes.Dapper.SqlServer/Brazilian.PrimitivesTypes.Dapper.SqlServer.csproj'
           )
 
@@ -204,6 +217,14 @@ jobs:
           --expected-dependency Brazilian.PrimitivesTypes
           --require-source-link
           --expected-version "$PACKAGE_VERSION"
+
+      - name: Validate Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql package
+        env:
+          PACKAGE_VERSION: ${{ steps.version.outputs.package_version }}
+        run: |
+          dotnet run --file scripts/verify-package.cs -- artifacts/packages --package-id Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql --expected-dependency Brazilian.PrimitivesTypes --require-source-link --expected-version "$PACKAGE_VERSION"
+          dotnet run --file scripts/verify-package.cs -- artifacts/packages --package-id Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql --expected-dependency Npgsql.EntityFrameworkCore.PostgreSQL --require-source-link --expected-version "$PACKAGE_VERSION"
+          dotnet run --file scripts/verify-package.cs -- artifacts/packages --package-id Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql --expected-dependency Microsoft.EntityFrameworkCore.Relational --require-source-link --expected-version "$PACKAGE_VERSION"
 
       - name: Validate Brazilian.PrimitivesTypes.Dapper.SqlServer package
         env:
@@ -308,6 +329,16 @@ jobs:
           --api-key "$NUGET_API_KEY"
           --skip-duplicate
 
+      - name: Publish Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql to NuGet.org
+        env:
+          NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
+          PACKAGE_VERSION: ${{ needs.build-and-pack.outputs.package-version }}
+        run: >-
+          dotnet nuget push "artifacts/packages/Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql.$PACKAGE_VERSION.nupkg"
+          --source https://api.nuget.org/v3/index.json
+          --api-key "$NUGET_API_KEY"
+          --skip-duplicate
+
       - name: Publish Brazilian.PrimitivesTypes.Dapper.SqlServer to NuGet.org
         env:
           NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
@@ -358,6 +389,17 @@ jobs:
           PACKAGE_VERSION: ${{ needs.build-and-pack.outputs.package-version }}
         run: >-
           dotnet nuget push "artifacts/packages/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer.$PACKAGE_VERSION.nupkg"
+          --source "$GITHUB_PACKAGE_SOURCE"
+          --api-key "$GITHUB_PACKAGE_TOKEN"
+          --skip-duplicate
+
+      - name: Publish Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql to GitHub Packages
+        env:
+          GITHUB_PACKAGE_SOURCE: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
+          GITHUB_PACKAGE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PACKAGE_VERSION: ${{ needs.build-and-pack.outputs.package-version }}
+        run: >-
+          dotnet nuget push "artifacts/packages/Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql.$PACKAGE_VERSION.nupkg"
           --source "$GITHUB_PACKAGE_SOURCE"
           --api-key "$GITHUB_PACKAGE_TOKEN"
           --skip-duplicate
