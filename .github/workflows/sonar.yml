@@ -165,4 +165,22 @@ jobs:
       - name: Finalizar e enviar análise
         if: ${{ env.SONAR_TOKEN != '' }}
         shell: bash
-        run: dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set +e
+          dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
+          scanner_exit=$?
+          set -e
+
+          status_url="$SONAR_HOST_URL/api/qualitygates/project_status?projectKey=$SONAR_PROJECT_KEY"
+          if [ -n "${PR_NUMBER:-}" ]; then
+            status_url="${status_url}&pullRequest=$PR_NUMBER"
+          else
+            status_url="${status_url}&branch=$GITHUB_REF_NAME"
+          fi
+
+          echo "Sonar Quality Gate details:"
+          curl --fail --silent --show-error -u "$SONAR_TOKEN:" "$status_url" | python -m json.tool || true
+
+          exit "$scanner_exit"
