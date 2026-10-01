@@ -1,5 +1,3 @@
-using System.Data;
-using System.Data.Common;
 using System.Globalization;
 using Brazilian.PrimitivesTypes;
 using Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql.Tests.Infrastructure;
@@ -65,10 +63,27 @@ public sealed class CustomerPostgreSqlEndToEndTests
             Assert.Equal(withEmail.Cep, loaded.Cep);
             Assert.Null(loadedWithoutEmail.Email);
 
-            Assert.Equal("52998224725", await ReadScalarAsync(context, "cpf", 1, cancellationToken));
-            Assert.Equal("User@xn--domnio-5va.com", await ReadScalarAsync(context, "email", 1, cancellationToken));
-            Assert.Equal("01311000", await ReadScalarAsync(context, "cep", 1, cancellationToken));
-            Assert.Null(await ReadScalarAsync(context, "email", 2, cancellationToken));
+            string rawCpf = await context.Database
+                .SqlQueryRaw<string>(
+                    "SELECT cpf AS \"Value\" FROM integration.customers WHERE id = 1")
+                .SingleAsync(cancellationToken);
+            string rawEmail = await context.Database
+                .SqlQueryRaw<string>(
+                    "SELECT email AS \"Value\" FROM integration.customers WHERE id = 1")
+                .SingleAsync(cancellationToken);
+            string rawCep = await context.Database
+                .SqlQueryRaw<string>(
+                    "SELECT cep AS \"Value\" FROM integration.customers WHERE id = 1")
+                .SingleAsync(cancellationToken);
+            string? nullEmail = await context.Database
+                .SqlQueryRaw<string?>(
+                    "SELECT email AS \"Value\" FROM integration.customers WHERE id = 2")
+                .SingleAsync(cancellationToken);
+
+            Assert.Equal("52998224725", rawCpf);
+            Assert.Equal("User@xn--domnio-5va.com", rawEmail);
+            Assert.Equal("01311000", rawCep);
+            Assert.Null(nullEmail);
 
             Customer tracked = await context.Customers.SingleAsync(customer => customer.Id == 1, cancellationToken);
             tracked.Email = Email.Parse("updated@DOMÍNIO.com", CultureInfo.InvariantCulture);
@@ -81,8 +96,17 @@ public sealed class CustomerPostgreSqlEndToEndTests
 
             Assert.Equal(Email.Parse("updated@domínio.com", CultureInfo.InvariantCulture), updated.Email);
             Assert.Equal(Cep.Parse("01001000", CultureInfo.InvariantCulture), updated.Cep);
-            Assert.Equal("updated@xn--domnio-5va.com", await ReadScalarAsync(context, "email", 1, cancellationToken));
-            Assert.Equal("01001000", await ReadScalarAsync(context, "cep", 1, cancellationToken));
+            string updatedRawEmail = await context.Database
+                .SqlQueryRaw<string>(
+                    "SELECT email AS \"Value\" FROM integration.customers WHERE id = 1")
+                .SingleAsync(cancellationToken);
+            string updatedRawCep = await context.Database
+                .SqlQueryRaw<string>(
+                    "SELECT cep AS \"Value\" FROM integration.customers WHERE id = 1")
+                .SingleAsync(cancellationToken);
+
+            Assert.Equal("updated@xn--domnio-5va.com", updatedRawEmail);
+            Assert.Equal("01001000", updatedRawCep);
 
             AssertSchemaMetadata(context);
         }
@@ -136,42 +160,7 @@ public sealed class CustomerPostgreSqlEndToEndTests
         Assert.Equal("character varying(254)", email.GetRelationalTypeMapping().StoreType);
         Assert.False(cep.IsNullable);
         Assert.Equal("character varying(8)", cep.GetRelationalTypeMapping().StoreType);
+        Assert.Equal(4, customer.GetProperties().Count());
         Assert.Empty(customer.GetIndexes());
-    }
-
-    private static async Task<string?> ReadScalarAsync(
-        CustomerPostgreSqlDbContext context,
-        string columnName,
-        long id,
-        CancellationToken cancellationToken)
-    {
-        DbConnection connection = context.Database.GetDbConnection();
-        bool openedHere = connection.State != ConnectionState.Open;
-
-        if (openedHere)
-        {
-            await connection.OpenAsync(cancellationToken);
-        }
-
-        try
-        {
-            await using DbCommand command = connection.CreateCommand();
-            command.CommandText = $"SELECT {columnName} FROM integration.customers WHERE id = @id";
-
-            DbParameter parameter = command.CreateParameter();
-            parameter.ParameterName = "id";
-            parameter.Value = id;
-            command.Parameters.Add(parameter);
-
-            object? result = await command.ExecuteScalarAsync(cancellationToken);
-            return result is null or DBNull ? null : (string)result;
-        }
-        finally
-        {
-            if (openedHere)
-            {
-                await connection.CloseAsync();
-            }
-        }
     }
 }
