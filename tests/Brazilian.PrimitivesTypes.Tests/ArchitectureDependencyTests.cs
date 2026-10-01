@@ -9,6 +9,7 @@ public sealed class ArchitectureDependencyTests
     [
         "Dapper",
         "Microsoft.EntityFrameworkCore",
+        "Npgsql",
         "Microsoft.Data.SqlClient",
         "System.Data.SqlClient",
     ];
