@@ -8,6 +8,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/Brazilian.PrimitivesTypes.Tests/Brazilian.PrimitivesTypes.Tests.csproj" />
     <Project Path="tests/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer.Tests/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer.Tests.csproj" />
+    <Project Path="tests/Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql.Tests/Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql.Tests.csproj" />
     <Project Path="tests/Brazilian.PrimitivesTypes.Dapper.SqlServer.Tests/Brazilian.PrimitivesTypes.Dapper.SqlServer.Tests.csproj" />
   </Folder>
 </Solution>
