@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+
+    <IsPackable>true</IsPackable>
+    <EnablePackageValidation>true</EnablePackageValidation>
+    <PackageId>Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql</PackageId>
+    <Title>Brazilian Primitives Types - Entity Framework Core PostgreSQL</Title>
+    <Description>Entity Framework Core PostgreSQL integration boundary for Brazilian.PrimitivesTypes. Provides the provider-specific package and dependency foundation for canonical Brazilian value-object persistence through Npgsql.</Description>
+    <PackageTags>brazil;brazilian;cpf;cnpj;cep;entity-framework-core;ef-core;postgresql;npgsql;value-objects;ddd;dotnet</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>nuget-icon.png</PackageIcon>
+    <RootNamespace>Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql</RootNamespace>
+
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <DebugType>portable</DebugType>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Brazilian.PrimitivesTypes/Brazilian.PrimitivesTypes.csproj" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="README.md" Pack="true" PackagePath="/" />
+    <None Include="resource/nuget-icon.png" Pack="true" PackagePath="/" />
+  </ItemGroup>
+</Project>
