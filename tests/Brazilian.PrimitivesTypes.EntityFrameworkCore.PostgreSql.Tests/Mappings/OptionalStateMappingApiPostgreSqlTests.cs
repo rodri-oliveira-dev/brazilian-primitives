@@ -123,6 +123,7 @@ public sealed class OptionalStateMappingApiPostgreSqlTests
             IEntityType entityType = context.Model.FindEntityType(typeof(ContextFreeStateRecord))!;
             Assert.Null(entityType.FindProperty("RgState"));
             Assert.Null(entityType.FindProperty("InscricaoEstadualState"));
+            Assert.Equal(5, entityType.GetProperties().Count());
             Assert.Empty(entityType.GetComplexProperties());
             Assert.Empty(entityType.GetIndexes());
         }
