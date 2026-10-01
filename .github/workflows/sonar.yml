@@ -183,4 +183,27 @@ jobs:
           echo "Sonar Quality Gate details:"
           curl --fail --silent --show-error -u "$SONAR_TOKEN:" "$status_url" | python -m json.tool || true
 
+          if [ -n "${PR_NUMBER:-}" ]; then
+            issues_url="$SONAR_HOST_URL/api/issues/search?componentKeys=$SONAR_PROJECT_KEY&pullRequest=$PR_NUMBER&resolved=false&ps=100"
+            echo "Sonar open PR issues:"
+            curl --fail --silent --show-error -u "$SONAR_TOKEN:" "$issues_url" | python -c '
+import json, sys
+data = json.load(sys.stdin)
+for issue in data.get("issues", []):
+    impacts = issue.get("impacts", [])
+    security = issue.get("type") == "VULNERABILITY" or any(i.get("softwareQuality") == "SECURITY" for i in impacts)
+    if security:
+        print(json.dumps({
+            "key": issue.get("key"),
+            "rule": issue.get("rule"),
+            "severity": issue.get("severity"),
+            "type": issue.get("type"),
+            "component": issue.get("component"),
+            "line": issue.get("line"),
+            "message": issue.get("message"),
+            "impacts": impacts
+        }, ensure_ascii=False))
+' || true
+          fi
+
           exit "$scanner_exit"
