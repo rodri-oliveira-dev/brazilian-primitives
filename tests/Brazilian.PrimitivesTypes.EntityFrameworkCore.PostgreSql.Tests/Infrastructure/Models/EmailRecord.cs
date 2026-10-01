@@ -4,7 +4,18 @@ namespace Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql.Tests.Infrast
 
 internal sealed class EmailRecord
 {
-    public int Id { get; set; }
+    public int Id
+    {
+        get;
+        set;
+    }
+    public Email? Email
 
-    public Email? Email { get; set; }
+    {
+
+        get;
+
+        set;
+
+    }
 }

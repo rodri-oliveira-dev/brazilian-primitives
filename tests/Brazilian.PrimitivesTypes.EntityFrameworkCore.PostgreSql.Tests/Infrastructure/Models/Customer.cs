@@ -4,8 +4,24 @@ namespace Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql.Tests.Infrast
 
 internal sealed class Customer
 {
-    public long Id { get; set; }
-    public Cpf Cpf { get; set; }
-    public Email? Email { get; set; }
-    public Cep Cep { get; set; }
+    public long Id
+    {
+        get;
+        set;
+    }
+    public Cpf Cpf
+    {
+        get;
+        set;
+    }
+    public Email? Email
+    {
+        get;
+        set;
+    }
+    public Cep Cep
+    {
+        get;
+        set;
+    }
 }

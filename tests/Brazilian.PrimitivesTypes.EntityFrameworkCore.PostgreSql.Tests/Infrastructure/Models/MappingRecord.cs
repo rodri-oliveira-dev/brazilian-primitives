@@ -4,8 +4,24 @@ namespace Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql.Tests.Infrast
 
 internal sealed class MappingRecord
 {
-    public int Id { get; set; }
-    public Cpf Cpf { get; set; }
-    public Email? Email { get; set; }
-    public Cep Cep { get; set; }
+    public int Id
+    {
+        get;
+        set;
+    }
+    public Cpf Cpf
+    {
+        get;
+        set;
+    }
+    public Email? Email
+    {
+        get;
+        set;
+    }
+    public Cep Cep
+    {
+        get;
+        set;
+    }
 }

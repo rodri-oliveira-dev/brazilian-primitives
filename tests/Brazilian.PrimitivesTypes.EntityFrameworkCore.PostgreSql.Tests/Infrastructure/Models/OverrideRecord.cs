@@ -4,6 +4,14 @@ namespace Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql.Tests.Infrast
 
 internal sealed class OverrideRecord
 {
-    public int Id { get; set; }
-    public Email? Email { get; set; }
+    public int Id
+    {
+        get;
+        set;
+    }
+    public Email? Email
+    {
+        get;
+        set;
+    }
 }

@@ -4,9 +4,29 @@ namespace Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql.Tests.Infrast
 
 internal sealed class StateAwareRecord
 {
-    public int Id { get; set; }
-    public Rg Rg { get; set; }
-    public Rg? OptionalRg { get; set; }
-    public InscricaoEstadual InscricaoEstadual { get; set; }
-    public InscricaoEstadual? OptionalInscricaoEstadual { get; set; }
+    public int Id
+    {
+        get;
+        set;
+    }
+    public Rg Rg
+    {
+        get;
+        set;
+    }
+    public Rg? OptionalRg
+    {
+        get;
+        set;
+    }
+    public InscricaoEstadual InscricaoEstadual
+    {
+        get;
+        set;
+    }
+    public InscricaoEstadual? OptionalInscricaoEstadual
+    {
+        get;
+        set;
+    }
 }
