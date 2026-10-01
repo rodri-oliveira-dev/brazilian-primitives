@@ -54,7 +54,7 @@ Brazilian.PrimitivesTypes
 └── Brazilian.PrimitivesTypes.Dapper.SqlServer
 ```
 
-`Brazilian.PrimitivesTypes` é o pacote de domínio. Ele não depende de EF Core, Dapper ou SQL Server.
+`Brazilian.PrimitivesTypes` é o pacote de domínio. Ele não depende de EF Core, Dapper, SQL Server, PostgreSQL ou Npgsql.
 
 Os pacotes de integração dependem do Core e adicionam apenas o comportamento necessário para o mecanismo de persistência correspondente. Esses limites são tratados como regras arquiteturais e protegidos por testes executados no CI.
 
@@ -90,11 +90,17 @@ Consulte o [inventário completo de primitivos](docs/pt-BR/primitives/index.md) 
 
 ## Integrações
 
-### Entity Framework Core
+### Entity Framework Core + SQL Server
 
 A integração para SQL Server oferece conventions, value converters e Fluent API para persistir os primitives sem remover os tipos fortes do modelo de domínio.
 
 Veja o guia de [Entity Framework Core com SQL Server](docs/pt-BR/entity-framework-core-sql-server.md).
+
+### Entity Framework Core + PostgreSQL
+
+A integração para PostgreSQL/Npgsql oferece conventions, value converters e Fluent API com persistência canônica em `character varying(n)`, preservação de nullabilidade CLR e suporte explícito a mappings context-free/state-aware para `Rg` e `InscricaoEstadual`. Nenhuma UF é inferida automaticamente.
+
+Veja o guia de [Entity Framework Core com PostgreSQL](docs/pt-BR/entity-framework-core-postgresql.md).
 
 ### Dapper
 
