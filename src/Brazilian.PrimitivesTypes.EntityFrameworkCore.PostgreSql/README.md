@@ -19,14 +19,17 @@ The provider targets .NET 10 and uses the repository's Entity Framework Core 10 
 
 ## Current scope
 
-This initial package establishes:
+The package currently establishes:
 
 - the dedicated PostgreSQL project/package/namespace;
 - Npgsql and EF Core relational dependencies;
 - Central Package Management and locked restore;
-- NuGet metadata, README, icon, XML documentation, symbols, Source Link, and package validation.
+- NuGet metadata, README, icon, XML documentation, symbols, Source Link, and package validation;
+- scalar value converters for canonical single-column persistence;
+- intrinsic PostgreSQL `character varying(n)` metadata for supported scalar primitives;
+- real PostgreSQL Testcontainers infrastructure and relational round-trip coverage.
 
-Value converters, optional-state RG/InscricaoEstadual persistence, conventions, fluent mapping APIs, PostgreSQL Testcontainers coverage, and end-to-end consumer documentation are delivered by the follow-up issues in roadmap #52.
+Optional-state RG/InscricaoEstadual persistence, model-wide conventions, fluent mapping APIs, and end-to-end consumer documentation remain follow-up work in roadmap #52.
 
 ## Namespace
 
