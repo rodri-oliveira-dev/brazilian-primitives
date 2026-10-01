@@ -56,6 +56,8 @@ public sealed class PostgreSqlSmokeTests
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.HasDefaultSchema("integration");
+
             modelBuilder.Entity<SmokeRecord>(entity =>
             {
                 entity.ToTable("smoke_records");
