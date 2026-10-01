@@ -121,11 +121,16 @@ jobs:
           fi
 
           changed_paths="$(git diff --name-status "$base_sha" HEAD --)"
+          cpd_exclusions="src/Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql/Internal/ChavePixCanonicalValueParser.cs"
+
           if echo "$changed_paths" | grep -Eq 'src/Brazilian\.Primitives/' \
             && echo "$changed_paths" | grep -Eq 'src/Brazilian\.PrimitivesTypes/'; then
-            echo "SONAR_CPD_EXCLUSIONS=src/Brazilian.PrimitivesTypes/*.cs" >> "$GITHUB_ENV"
+            cpd_exclusions="${cpd_exclusions},src/Brazilian.PrimitivesTypes/*.cs"
             echo "Sonar CPD exclusions enabled for the one-time identity rename."
           fi
+
+          echo "SONAR_CPD_EXCLUSIONS=$cpd_exclusions" >> "$GITHUB_ENV"
+          echo "Sonar CPD excludes the provider-specific Pix canonical parser because its shape intentionally mirrors the SQL Server adapter."
 
       - name: Iniciar análise Sonar
         if: ${{ env.SONAR_TOKEN != '' }}
