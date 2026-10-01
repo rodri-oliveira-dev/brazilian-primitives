@@ -93,6 +93,27 @@ public sealed class ConventionAndFluentMappingPostgreSqlTests
         using NoOptInDbContext context = new(
             PostgreSqlDbContextOptionsFactory.Create<NoOptInDbContext>(_fixture, "brazilian_primitives_no_opt_in"));
 
+        Exception? exception = Record.Exception(() =>
+        {
+            IEntityType? entityType = context.Model.FindEntityType(typeof(MappingRecord));
+            IProperty? cpfProperty = entityType?.FindProperty(nameof(MappingRecord.Cpf));
+            Assert.Null(cpfProperty?.GetValueConverter());
+        });
+
+        if (exception is not null)
+        {
+            Assert.IsType<InvalidOperationException>(exception);
+        }
+    }
+
+    [Fact]
+    public void ScalarConventionLeavesOptionalStatePrimitivesExplicit()
+    {
+        using PrimitiveConventionOnlyStateDbContext context = new(
+            PostgreSqlDbContextOptionsFactory.Create<PrimitiveConventionOnlyStateDbContext>(
+                _fixture,
+                "brazilian_primitives_state_explicit"));
+
         Assert.Throws<InvalidOperationException>(() => _ = context.Model);
     }
 
