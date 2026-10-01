@@ -23,7 +23,7 @@ public static class RgStateAwarePostgreSqlMapping
             builder,
             value => value.Value,
             value => value.State,
-            "character varying(10)",
+            10,
             valueColumnName,
             stateColumnName);
     }

@@ -92,9 +92,18 @@ public sealed class OptionalStatePostgreSqlTests
             Assert.Null(loadedNullOptional.OptionalRg);
             Assert.Null(loadedNullOptional.OptionalInscricaoEstadual);
 
-            Assert.NotEqual(loadedContextFree.Rg, loadedNullOptional.Rg);
-            Assert.False(loadedContextFree.Rg.HasState);
+            Rg sameRgWithoutState = Rg.Parse("123456789");
+            InscricaoEstadual sameIeWithoutState = InscricaoEstadual.Parse("12345678");
+
+            Assert.NotEqual(sameRgWithoutState, loadedNullOptional.Rg);
+            Assert.Equal(sameRgWithoutState.Value, loadedNullOptional.Rg.Value);
+            Assert.False(sameRgWithoutState.HasState);
             Assert.True(loadedNullOptional.Rg.HasState);
+
+            Assert.NotEqual(sameIeWithoutState, loadedNullOptional.InscricaoEstadual);
+            Assert.Equal(sameIeWithoutState.Value, loadedNullOptional.InscricaoEstadual.Value);
+            Assert.False(sameIeWithoutState.HasState);
+            Assert.True(loadedNullOptional.InscricaoEstadual.HasState);
 
             AssertColumnMetadata(context);
         }
@@ -150,14 +159,14 @@ public sealed class OptionalStatePostgreSqlTests
             contextFree.FindProperty(nameof(ContextFreeStateRecord.InscricaoEstadual))!.GetRelationalTypeMapping().StoreType);
 
         IEntityType stateAware = context.Model.FindEntityType(typeof(StateAwareRecord))!;
-        Assert.Equal(
-            "character varying(10)",
-            stateAware.FindComplexProperty(nameof(StateAwareRecord.Rg))!
-                .ComplexType.FindProperty(nameof(Rg.Value))!.GetRelationalTypeMapping().StoreType);
-        Assert.Equal(
-            "character varying(2)",
-            stateAware.FindComplexProperty(nameof(StateAwareRecord.Rg))!
-                .ComplexType.FindProperty(nameof(Rg.State))!.GetRelationalTypeMapping().StoreType);
+        IProperty rgValueProperty = stateAware.FindComplexProperty(nameof(StateAwareRecord.Rg))!
+            .ComplexType.FindProperty(nameof(Rg.Value))!;
+        Assert.Equal("character varying(10)", rgValueProperty.GetRelationalTypeMapping().StoreType);
+        Assert.Equal(10, rgValueProperty.GetMaxLength());
+        IProperty rgStateProperty = stateAware.FindComplexProperty(nameof(StateAwareRecord.Rg))!
+            .ComplexType.FindProperty(nameof(Rg.State))!;
+        Assert.Equal("character varying(2)", rgStateProperty.GetRelationalTypeMapping().StoreType);
+        Assert.Equal(2, rgStateProperty.GetMaxLength());
         Assert.Equal(
             "character varying(14)",
             stateAware.FindComplexProperty(nameof(StateAwareRecord.InscricaoEstadual))!

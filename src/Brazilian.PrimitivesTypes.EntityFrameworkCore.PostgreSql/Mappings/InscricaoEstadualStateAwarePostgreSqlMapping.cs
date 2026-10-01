@@ -23,7 +23,7 @@ public static class InscricaoEstadualStateAwarePostgreSqlMapping
             builder,
             value => value.Value,
             value => value.State,
-            "character varying(14)",
+            14,
             valueColumnName,
             stateColumnName);
     }

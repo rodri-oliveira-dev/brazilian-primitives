@@ -11,7 +11,7 @@ internal static class StateAwareComplexPropertyConfigurator
         ComplexPropertyBuilder<TComplex> builder,
         Expression<Func<TComplex, string>> valueExpression,
         Expression<Func<TComplex, BrazilianState>> stateExpression,
-        string valueColumnType,
+        int valueMaxLength,
         string? valueColumnName,
         string? stateColumnName)
         where TComplex : notnull
@@ -19,12 +19,14 @@ internal static class StateAwareComplexPropertyConfigurator
         ArgumentNullException.ThrowIfNull(builder);
 
         ComplexTypePropertyBuilder<string> valueProperty = builder.Property(valueExpression)
-            .HasColumnType(valueColumnType)
+            .HasMaxLength(valueMaxLength)
+            .HasColumnType($"character varying({valueMaxLength})")
             .IsRequired();
         ApplyColumnName(valueProperty, valueColumnName);
 
         ComplexTypePropertyBuilder<BrazilianState> stateProperty = builder.Property(stateExpression)
             .HasConversion(new BrazilianStateCodeValueConverter())
+            .HasMaxLength(2)
             .HasColumnType("character varying(2)")
             .IsRequired();
         ApplyColumnName(stateProperty, stateColumnName);
