@@ -349,6 +349,27 @@ jobs:
           --api-key "$NUGET_API_KEY"
           --skip-duplicate
 
+      - name: Publish symbol packages to NuGet.org
+        shell: bash
+        env:
+          NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          symbol_packages=(artifacts/packages/*.snupkg)
+
+          if [ "${#symbol_packages[@]}" -eq 0 ]; then
+            echo "::error::No symbol packages were produced."
+            exit 1
+          fi
+
+          for package in "${symbol_packages[@]}"; do
+            dotnet nuget push "$package" \
+              --source https://api.nuget.org/v3/index.json \
+              --api-key "$NUGET_API_KEY" \
+              --skip-duplicate
+          done
+
   publish-github-packages:
     name: Publish to GitHub Packages
     needs:
