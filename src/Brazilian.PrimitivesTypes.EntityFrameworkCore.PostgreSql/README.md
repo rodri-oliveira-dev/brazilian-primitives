@@ -27,10 +27,11 @@ The package currently establishes:
 - NuGet metadata, README, icon, XML documentation, symbols, Source Link, and package validation;
 - scalar value converters for canonical single-column persistence;
 - context-free and state-aware PostgreSQL persistence for RG and Inscricao Estadual, preserving optional UF context;
+- opt-in property-level fluent mappings and model-wide PostgreSQL pre-conventions;
 - intrinsic PostgreSQL `character varying(n)` metadata for supported scalar primitives;
 - real PostgreSQL Testcontainers infrastructure and relational round-trip coverage.
 
-Model-wide conventions, fluent mapping extensions, and end-to-end consumer documentation remain follow-up work in roadmap #52.
+End-to-end consumer validation, packaging/release integration, and final documentation alignment remain follow-up work in roadmap #52.
 
 ## Namespace
 

@@ -1,6 +1,49 @@
 # Entity Framework Core + PostgreSQL
 
-O pacote `Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql` mantém a persistência PostgreSQL/Npgsql fora do pacote de domínio principal.
+O pacote `Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql` mantém a persistência PostgreSQL/Npgsql fora do pacote de domínio principal. A configuração é explícita: apenas referenciar o pacote não modifica o modelo do EF Core.
+
+## Opt-in para o modelo inteiro
+
+Registre os primitives escalares em `ConfigureConventions`:
+
+```csharp
+protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+{
+    configurationBuilder.UseBrazilianPrimitiveTypesPostgreSql();
+}
+```
+
+Isso aplica converters, tamanhos máximos e store types PostgreSQL `character varying(n)` aos primitives escalares suportados. Propriedades CLR obrigatórias `T` e anuláveis `T?` mantêm a semântica normal de nullabilidade do EF Core.
+
+`Rg` e `InscricaoEstadual` ficam intencionalmente fora dessa convenção porque o contexto de UF não pode ser inferido com segurança.
+
+Se todos os RGs/IEs do modelo forem intencionalmente context-free, faça um opt-in separado:
+
+```csharp
+protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+{
+    configurationBuilder
+        .UseBrazilianPrimitiveTypesPostgreSql()
+        .UseBrazilianContextFreeStateRegistrationsPostgreSql();
+}
+```
+
+Esse segundo registro continua usando apenas uma coluna por identificador e nunca cria nem exige uma coluna de UF.
+
+## Mappings explícitos por propriedade
+
+Para controle pontual, use as extensões PostgreSQL:
+
+```csharp
+entity.Property(x => x.Cpf)
+    .HasBrazilianCpfPostgreSql();
+
+entity.Property(x => x.Email)
+    .HasBrazilianEmailPostgreSql()
+    .HasColumnName("contact_email");
+```
+
+Configurações normais do EF Core/Npgsql podem ser encadeadas depois. O consumidor pode sobrescrever nomes de coluna, nullabilidade, tipos PostgreSQL e outras facets. A biblioteca não cria índices, constraints de unicidade, chaves ou regras específicas de agregado.
 
 ## RG e Inscrição Estadual
 
@@ -8,43 +51,37 @@ Os dois primitives possuem dois modos de persistência porque o contexto de UF �
 
 ### Modo sem contexto de UF
 
-Use os converters de uma coluna quando o identificador não carrega uma UF:
+Use os mappings explícitos de uma coluna quando o identificador não carrega UF:
 
 ```csharp
 entity.Property(x => x.Rg)
-    .HasConversion(new RgValueConverter())
-    .HasMaxLength(10)
-    .HasColumnType("character varying(10)");
+    .HasBrazilianRgContextFreePostgreSql();
 
 entity.Property(x => x.InscricaoEstadual)
-    .HasConversion(new InscricaoEstadualValueConverter())
-    .HasMaxLength(14)
-    .HasColumnType("character varying(14)");
+    .HasBrazilianInscricaoEstadualContextFreePostgreSql();
 ```
 
-Esse modo persiste somente o `Value` canônico. A materialização usa o parser sem contexto, portanto nenhuma UF é inferida. Se um valor que já possui UF for enviado a esses converters, a operação falha em vez de descartar silenciosamente o estado.
+Esse modo persiste somente o `Value` canônico. A materialização usa o parser sem contexto, portanto nenhuma UF é inferida. Se um valor com UF for enviado a esse mapping, a operação falha em vez de descartar silenciosamente o estado.
 
 ### Modo com UF
 
-Quando o identificador possui estado explícito, persista `Value` e `State`:
+Quando o identificador possui estado explícito, mapeie-o como complex property para persistir `Value` e `State`:
 
 ```csharp
 entity.ComplexProperty(
     x => x.Rg,
-    complex => RgStateAwarePostgreSqlMapping.Configure(
-        complex,
+    complex => complex.HasBrazilianRgStateAwarePostgreSql(
         "rg_value",
         "rg_state"));
 
 entity.ComplexProperty(
     x => x.InscricaoEstadual,
-    complex => InscricaoEstadualStateAwarePostgreSqlMapping.Configure(
-        complex,
+    complex => complex.HasBrazilianInscricaoEstadualStateAwarePostgreSql(
         "inscricao_value",
         "inscricao_state"));
 ```
 
-A UF é armazenada por um código estável de duas letras, como `SP`, `MG` ou `RO`. `BrazilianState.Unknown` não é válido em um mapping state-aware.
+A UF é armazenada por código estável de duas letras, como `SP`, `MG` ou `RO`. `BrazilianState.Unknown` não é válido em mapping state-aware.
 
 ### Nullabilidade
 
@@ -58,4 +95,4 @@ Os três estados permanecem distintos. Nenhuma UF é inferida a partir do texto 
 
 ## Comportamento de validação
 
-Valores não nulos persistidos são reidratados pelas regras públicas de criação/validação do domínio. Texto inválido no banco ou códigos de UF inválidos falham durante a materialização em vez de produzirem um value object default ou inválido.
+Valores persistidos não nulos são reidratados pelas regras públicas de criação/validação do domínio. Texto inválido no banco ou códigos de UF inválidos falham durante a materialização em vez de produzirem um value object default ou inválido.
