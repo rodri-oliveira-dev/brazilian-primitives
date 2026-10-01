@@ -282,6 +282,79 @@ jobs:
 
           dotnet build "$consumer_project" --configuration Release --no-restore
 
+      - name: Validar consumo do pacote PostgreSQL local
+        shell: bash
+        run: |
+          project="src/Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql/Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql.csproj"
+          version="$(dotnet msbuild "$project" -nologo -getProperty:PackageVersion | tr -d '\r' | sed '/^[[:space:]]*$/d' | tail -n 1)"
+          consumer="$(mktemp -d)"
+
+          dotnet new console --framework net10.0 --output "$consumer"
+          consumer_project="$(find "$consumer" -maxdepth 1 -name '*.csproj' -print -quit)"
+
+          if [ -z "$consumer_project" ]; then
+            echo "Projeto consumidor PostgreSQL temporário não foi criado."
+            exit 1
+          fi
+
+          dotnet add "$consumer_project" package Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql \
+            --version "$version" \
+            --no-restore
+
+          cat > "$consumer/NuGet.Config" <<EOF
+          <?xml version="1.0" encoding="utf-8"?>
+          <configuration>
+            <packageSources>
+              <clear />
+              <add key="local" value="$GITHUB_WORKSPACE/artifacts/packages" />
+              <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
+            </packageSources>
+            <packageSourceMapping>
+              <packageSource key="local">
+                <package pattern="Brazilian.PrimitivesTypes*" />
+              </packageSource>
+              <packageSource key="nuget.org">
+                <package pattern="Npgsql*" />
+                <package pattern="Microsoft.EntityFrameworkCore*" />
+                <package pattern="Microsoft.Extensions.*" />
+              </packageSource>
+            </packageSourceMapping>
+          </configuration>
+          EOF
+
+          dotnet restore "$consumer_project" --configfile "$consumer/NuGet.Config"
+
+          cat > "$consumer/Program.cs" <<'EOF'
+          using Brazilian.PrimitivesTypes;
+          using Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql;
+          using Microsoft.EntityFrameworkCore;
+
+          _ = Cpf.Parse("529.982.247-25");
+          _ = new DbContextOptionsBuilder<SampleContext>()
+              .UseNpgsql("Host=localhost;Database=sample;Username=sample;Password=sample")
+              .Options;
+
+          Console.WriteLine("PostgreSQL integration package consumed successfully.");
+
+          internal sealed class SampleContext : DbContext
+          {
+              protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+              {
+                  configurationBuilder.UseBrazilianPrimitiveTypesPostgreSql();
+              }
+          }
+          EOF
+
+          dependency_graph="$(dotnet list "$consumer_project" package --include-transitive)"
+          echo "$dependency_graph"
+
+          if grep -Eq 'Microsoft\.Data\.SqlClient|Microsoft\.EntityFrameworkCore\.SqlServer|Dapper' <<< "$dependency_graph"; then
+            echo "O pacote PostgreSQL não pode introduzir dependências SQL Server ou Dapper."
+            exit 1
+          fi
+
+          dotnet build "$consumer_project" --configuration Release --no-restore
+
       - name: Validar consumo do pacote Dapper local
         shell: bash
         run: |
