@@ -1,3 +1,4 @@
+using Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql;
 using Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql.Tests.Infrastructure.Models;
 using Microsoft.EntityFrameworkCore;
 
