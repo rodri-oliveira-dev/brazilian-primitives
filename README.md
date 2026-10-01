@@ -18,6 +18,7 @@ O objetivo é manter o domínio independente de infraestrutura: use apenas os pr
 | --- | --- |
 | [`Brazilian.PrimitivesTypes`](https://www.nuget.org/packages/Brazilian.PrimitivesTypes) | Você precisa de CPF, CNPJ, CEP, Pix, telefones, documentos, veículos e outros tipos brasileiros sem dependência de persistência |
 | [`Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer`](https://www.nuget.org/packages/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer) | Sua aplicação usa Entity Framework Core com SQL Server |
+| [`Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql`](https://www.nuget.org/packages/Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql) | Sua aplicação usa Entity Framework Core com PostgreSQL/Npgsql |
 | [`Brazilian.PrimitivesTypes.Dapper.SqlServer`](https://www.nuget.org/packages/Brazilian.PrimitivesTypes.Dapper.SqlServer) | Sua aplicação usa Dapper com SQL Server |
 
 ### Core
@@ -32,6 +33,12 @@ dotnet add package Brazilian.PrimitivesTypes
 dotnet add package Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer
 ```
 
+### Entity Framework Core + PostgreSQL
+
+```bash
+dotnet add package Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql
+```
+
 ### Dapper + SQL Server
 
 ```bash
@@ -43,6 +50,7 @@ dotnet add package Brazilian.PrimitivesTypes.Dapper.SqlServer
 ```text
 Brazilian.PrimitivesTypes
 ├── Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer
+├── Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql
 └── Brazilian.PrimitivesTypes.Dapper.SqlServer
 ```
 
@@ -126,5 +134,6 @@ Para validar os pacotes localmente:
 ```bash
 dotnet pack src/Brazilian.PrimitivesTypes/Brazilian.PrimitivesTypes.csproj --configuration Release --output artifacts/packages
 dotnet pack src/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer.csproj --configuration Release --output artifacts/packages
+dotnet pack src/Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql/Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql.csproj --configuration Release --output artifacts/packages
 dotnet pack src/Brazilian.PrimitivesTypes.Dapper.SqlServer/Brazilian.PrimitivesTypes.Dapper.SqlServer.csproj --configuration Release --output artifacts/packages
 ```

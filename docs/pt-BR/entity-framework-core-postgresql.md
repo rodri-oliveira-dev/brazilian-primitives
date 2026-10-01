@@ -1,57 +1,154 @@
 # Entity Framework Core + PostgreSQL
 
-O pacote `Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql` mantém a persistência PostgreSQL/Npgsql fora do pacote de domínio principal. A configuração é explícita: apenas referenciar o pacote não modifica o modelo do EF Core.
+`Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql` é a integração opcional de Entity Framework Core para PostgreSQL/Npgsql. O pacote de domínio continua independente de persistência; instale esta integração apenas no projeto de infraestrutura/persistência que contém o modelo do EF Core.
 
-## Opt-in para o modelo inteiro
+## Instalação
 
-Registre os primitives escalares em `ConfigureConventions`:
+```bash
+dotnet add package Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql
+```
+
+O pacote depende de `Brazilian.PrimitivesTypes`, das APIs relacionais do EF Core e de `Npgsql.EntityFrameworkCore.PostgreSQL`. Apenas referenciar o pacote **não** modifica o modelo do EF Core: a configuração é explícita e opt-in.
+
+## Exemplo com Customer
+
+A entidade de domínio continua usando os tipos fortes:
 
 ```csharp
-protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+using Brazilian.PrimitivesTypes;
+
+public sealed class Customer
 {
-    configurationBuilder.UseBrazilianPrimitiveTypesPostgreSql();
+    public long Id { get; set; }
+    public Cpf Cpf { get; set; }
+    public Email? Email { get; set; }
+    public Cep Cep { get; set; }
 }
 ```
 
-Isso aplica converters, tamanhos máximos e store types PostgreSQL `character varying(n)` aos primitives escalares suportados. Propriedades CLR obrigatórias `T` e anuláveis `T?` mantêm a semântica normal de nullabilidade do EF Core.
-
-`Rg` e `InscricaoEstadual` ficam intencionalmente fora dessa convenção porque o contexto de UF não pode ser inferido com segurança.
-
-Se todos os RGs/IEs do modelo forem intencionalmente context-free, faça um opt-in separado:
+Configure o Npgsql normalmente:
 
 ```csharp
-protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(connectionString));
+```
+
+### Conventions para o modelo inteiro
+
+Para aplicar os mappings PostgreSQL padrão aos primitives escalares, registre a integração em `ConfigureConventions`:
+
+```csharp
+using Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql;
+using Microsoft.EntityFrameworkCore;
+
+public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
+    : DbContext(options)
 {
-    configurationBuilder
-        .UseBrazilianPrimitiveTypesPostgreSql()
-        .UseBrazilianContextFreeStateRegistrationsPostgreSql();
+    public DbSet<Customer> Customers => Set<Customer>();
+
+    protected override void ConfigureConventions(
+        ModelConfigurationBuilder configurationBuilder)
+    {
+        configurationBuilder.UseBrazilianPrimitiveTypesPostgreSql();
+    }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Customer>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Cpf).HasColumnName("cpf");
+            entity.Property(x => x.Email).HasColumnName("email");
+            entity.Property(x => x.Cep).HasColumnName("cep");
+        });
+    }
 }
 ```
 
-Esse segundo registro continua usando apenas uma coluna por identificador e nunca cria nem exige uma coluna de UF.
+As conventions configuram conversão canônica, tamanho máximo intrínseco e store types PostgreSQL `character varying(n)`. A nullabilidade CLR é preservada: `Cpf` e `Cep` são obrigatórios e `Email?` é anulável.
 
-## Mappings explícitos por propriedade
+### Mapping explícito por propriedade
 
-Para controle pontual, use as extensões PostgreSQL:
+Quando você preferir enxergar o mapping propriedade por propriedade:
 
 ```csharp
 entity.Property(x => x.Cpf)
     .HasBrazilianCpfPostgreSql();
 
 entity.Property(x => x.Email)
-    .HasBrazilianEmailPostgreSql()
-    .HasColumnName("contact_email");
+    .HasBrazilianEmailPostgreSql();
+
+entity.Property(x => x.Cep)
+    .HasBrazilianCepPostgreSql();
 ```
 
-Configurações normais do EF Core/Npgsql podem ser encadeadas depois. O consumidor pode sobrescrever nomes de coluna, nullabilidade, tipos PostgreSQL e outras facets. A biblioteca não cria índices, constraints de unicidade, chaves ou regras específicas de agregado.
+Configurações normais do EF Core/Npgsql podem ser encadeadas depois:
+
+```csharp
+entity.Property(x => x.Email)
+    .HasBrazilianEmailPostgreSql()
+    .HasColumnName("contact_email")
+    .HasColumnType("text");
+```
+
+O pacote não cria automaticamente índices, constraints de unicidade, chaves primárias/estrangeiras ou regras específicas do agregado.
+
+## Representação canônica no PostgreSQL
+
+A persistência usa o `Value` canônico de cada primitive, nunca `Formatted` nem o texto original recebido.
+
+Exemplos:
+
+| Valor de domínio | Valor no PostgreSQL |
+| --- | --- |
+| `Cpf.Parse("529.982.247-25")` | `52998224725` |
+| `Cep.Parse("01311-000")` | `01311000` |
+| `Email.Parse("User@Domínio.com")` | `User@xn--domnio-5va.com` |
+
+Zeros à esquerda e a capitalização/normalização canônica de valores alfanuméricos são preservados.
+
+`Formatted` é destinado à apresentação e não deve ser a representação persistida padrão.
+
+## Insert, leitura, query e update
+
+```csharp
+Cpf cpf = Cpf.Parse("529.982.247-25");
+
+Customer customer = new()
+{
+    Id = 1,
+    Cpf = cpf,
+    Email = Email.Parse("User@Domínio.com"),
+    Cep = Cep.Parse("01311-000"),
+};
+
+db.Customers.Add(customer);
+await db.SaveChangesAsync();
+
+Customer loaded = await db.Customers
+    .SingleAsync(x => x.Cpf == cpf);
+
+loaded.Email = Email.Parse("updated@domínio.com");
+loaded.Cep = Cep.Parse("01001-000");
+
+await db.SaveChangesAsync();
+```
+
+A expressão LINQ compara a propriedade fortemente tipada e o EF Core envia ao PostgreSQL o valor canônico do provider.
+
+## Primitives anuláveis e dados inválidos
+
+`Email? == null` representa ausência e é persistido como SQL `NULL`. Na materialização o resultado volta como `null`; o provider não tenta fazer parse de um valor ausente e não cria uma instância `default`.
+
+Isso é diferente de um valor **não nulo e inválido** armazenado no banco. Se a coluna contiver, por exemplo, `not-an-email`, a materialização falha através do parser público que preserva as invariantes do primitive. O provider não fabrica um objeto inválido/default.
 
 ## RG e Inscrição Estadual
 
-Os dois primitives possuem dois modos de persistência porque o contexto de UF é opcional no modelo de domínio.
+Os dois tipos possuem contexto opcional de `BrazilianState`. Nullabilidade da propriedade e presença de UF são conceitos independentes.
 
-### Modo sem contexto de UF
+### Sem UF: uma coluna
 
-Use os mappings explícitos de uma coluna quando o identificador não carrega UF:
+Quando o identificador existe, mas a UF não é conhecida:
 
 ```csharp
 entity.Property(x => x.Rg)
@@ -61,11 +158,32 @@ entity.Property(x => x.InscricaoEstadual)
     .HasBrazilianInscricaoEstadualContextFreePostgreSql();
 ```
 
-Esse modo persiste somente o `Value` canônico. A materialização usa o parser sem contexto, portanto nenhuma UF é inferida. Se um valor com UF for enviado a esse mapping, a operação falha em vez de descartar silenciosamente o estado.
+Somente o `Value` canônico é persistido:
 
-### Modo com UF
+```text
+RG                 -> character varying(10)
+InscricaoEstadual  -> character varying(14)
+```
 
-Quando o identificador possui estado explícito, mapeie-o como complex property para persistir `Value` e `State`:
+A materialização chama `Rg.Parse(value)` / `InscricaoEstadual.Parse(value)`. Nenhuma UF é inferida a partir do identificador.
+
+Se uma instância que já possui UF for enviada ao converter context-free, a operação é rejeitada em vez de descartar silenciosamente o estado.
+
+Quando todos os RGs/IEs de um modelo forem intencionalmente context-free, a escolha também pode ser global:
+
+```csharp
+protected override void ConfigureConventions(
+    ModelConfigurationBuilder configurationBuilder)
+{
+    configurationBuilder
+        .UseBrazilianPrimitiveTypesPostgreSql()
+        .UseBrazilianContextFreeStateRegistrationsPostgreSql();
+}
+```
+
+### Com UF: Value + estado
+
+Quando a UF é explicitamente conhecida, mapeie o primitive como complex property:
 
 ```csharp
 entity.ComplexProperty(
@@ -81,18 +199,51 @@ entity.ComplexProperty(
         "inscricao_state"));
 ```
 
-A UF é armazenada por código estável de duas letras, como `SP`, `MG` ou `RO`. `BrazilianState.Unknown` não é válido em mapping state-aware.
+O PostgreSQL armazena as duas informações:
 
-### Nullabilidade
+```text
+rg_value        character varying(10)
+rg_state        character varying(2)
+inscricao_value character varying(14)
+inscricao_state character varying(2)
+```
 
-A nullabilidade da propriedade é independente do contexto de UF:
+A UF usa códigos estáveis de duas letras, como `SP`, `MG` e `RO`. A materialização preserva o estado e, portanto, a semântica de igualdade original do domínio.
 
-- `Rg? == null` ou `InscricaoEstadual? == null`: o identificador está ausente e o PostgreSQL armazena SQL `NULL`;
-- valor context-free não nulo: o identificador existe, mas não possui UF;
-- valor state-aware não nulo: identificador e UF são conhecidos.
+Quando o primitive do core possui uma regra de validação específica para determinada UF, informar o estado habilita essa validação local mais forte. O provider de persistência nunca consulta DETRAN, SEFAZ, SINTEGRA ou outros cadastros externos.
 
-Os três estados permanecem distintos. Nenhuma UF é inferida a partir do texto do identificador.
+### Três estados diferentes
 
-## Comportamento de validação
+Estes casos são diferentes por definição:
 
-Valores persistidos não nulos são reidratados pelas regras públicas de criação/validação do domínio. Texto inválido no banco ou códigos de UF inválidos falham durante a materialização em vez de produzirem um value object default ou inválido.
+1. `Rg? == null`: o identificador inteiro está ausente e é SQL `NULL`.
+2. `Rg` não nulo com `HasState == false` / `State == BrazilianState.Unknown`: o identificador existe sem UF.
+3. `Rg` não nulo com `HasState == true`: identificador e UF explícita são conhecidos.
+
+A mesma distinção vale para `InscricaoEstadual`.
+
+## Schema PostgreSQL esperado
+
+Para o exemplo de `Customer`, os mappings padrão geram semântica equivalente a:
+
+```sql
+CREATE TABLE customers (
+    id bigint NOT NULL,
+    cpf character varying(11) NOT NULL,
+    email character varying(254) NULL,
+    cep character varying(8) NOT NULL,
+    CONSTRAINT pk_customers PRIMARY KEY (id)
+);
+```
+
+No modo context-free, RG/IE possuem somente a coluna de valor. No modo state-aware há uma coluna adicional `character varying(2)` para UF. A integração não adiciona índices nem unicidade automática para CPF, CNPJ, e-mail, RG ou outros primitives.
+
+## PostgreSQL versus SQL Server
+
+A integração PostgreSQL não copia o modelo ANSI/Unicode do SQL Server. Os tipos textuais do PostgreSQL usam a codificação do banco; o provider aplica `character varying(n)` para limites intrínsecos em vez de SQL Server `varchar(n)` com `IsUnicode(false)`.
+
+Os dois providers preservam as mesmas invariantes de domínio, mas possuem metadata relacional específica de cada banco. As integrações SQL Server e PostgreSQL são pacotes separados e não dependem uma da outra.
+
+## Limite de validação
+
+Todo parse e validação realizados pelos value objects são locais e determinísticos. Persistir um valor não prova que o identificador existe, está ativo, pertence a alguém ou está cadastrado em uma base oficial.

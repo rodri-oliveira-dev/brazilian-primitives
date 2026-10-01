@@ -1,12 +1,47 @@
 # Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql
 
-Entity Framework Core + PostgreSQL provider boundary for `Brazilian.PrimitivesTypes`.
+Entity Framework Core + PostgreSQL/Npgsql integration for `Brazilian.PrimitivesTypes`.
 
-This package keeps PostgreSQL/Npgsql persistence concerns outside the core domain package and independent from the existing SQL Server integration.
+This package keeps PostgreSQL persistence concerns outside the domain package and independent from the SQL Server integration.
+
+## Install
+
+```bash
+dotnet add package Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql
+```
+
+## Model-wide mapping
+
+```csharp
+using Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql;
+
+protected override void ConfigureConventions(
+    ModelConfigurationBuilder configurationBuilder)
+{
+    configurationBuilder.UseBrazilianPrimitiveTypesPostgreSql();
+}
+```
+
+Or map individual properties explicitly:
+
+```csharp
+entity.Property(x => x.Cpf).HasBrazilianCpfPostgreSql();
+entity.Property(x => x.Email).HasBrazilianEmailPostgreSql();
+entity.Property(x => x.Cep).HasBrazilianCepPostgreSql();
+```
+
+The integration persists canonical `Value` strings, applies provider-specific `character varying(n)` metadata, preserves nullable `T?` as SQL `NULL`, and supports strongly typed LINQ equality queries.
+
+`Rg` and `InscricaoEstadual` have explicit context-free and state-aware mappings. A known UF is never silently discarded or inferred.
+
+The library does not create indexes, uniqueness constraints, keys, or perform external cadastral validation.
+
+## Documentation
+
+- [English: Entity Framework Core + PostgreSQL](https://github.com/rodri-oliveira-dev/brazilian-primitives/blob/main/docs/en/entity-framework-core-postgresql.md)
+- [Português: Entity Framework Core + PostgreSQL](https://github.com/rodri-oliveira-dev/brazilian-primitives/blob/main/docs/pt-BR/entity-framework-core-postgresql.md)
 
 ## Package boundary
-
-The dependency direction is intentionally one-way:
 
 ```text
 Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql
@@ -15,34 +50,4 @@ Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql
   └─> Npgsql.EntityFrameworkCore.PostgreSQL
 ```
 
-The provider targets .NET 10 and uses the repository's Entity Framework Core 10 baseline.
-
-## Current scope
-
-The package currently establishes:
-
-- the dedicated PostgreSQL project/package/namespace;
-- Npgsql and EF Core relational dependencies;
-- Central Package Management and locked restore;
-- NuGet metadata, README, icon, XML documentation, symbols, Source Link, and package validation;
-- scalar value converters for canonical single-column persistence;
-- context-free and state-aware PostgreSQL persistence for RG and Inscricao Estadual, preserving optional UF context;
-- opt-in property-level fluent mappings and model-wide PostgreSQL pre-conventions;
-- intrinsic PostgreSQL `character varying(n)` metadata for supported scalar primitives;
-- real PostgreSQL Testcontainers infrastructure and relational round-trip coverage.
-
-End-to-end consumer validation, packaging/release integration, and final documentation alignment remain follow-up work in roadmap #52.
-
-## Namespace
-
-Provider-specific APIs belong to:
-
-```csharp
-Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql
-```
-
-PostgreSQL behavior must not be added to `Brazilian.PrimitivesTypes` or to `Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer`.
-
-## Repository
-
-https://github.com/rodri-oliveira-dev/brazilian-primitives
+The PostgreSQL package does not reference the SQL Server or Dapper integrations.

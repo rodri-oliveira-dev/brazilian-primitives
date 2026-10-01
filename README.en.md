@@ -72,6 +72,18 @@ It stores canonical `Value` representations in SQL Server columns, maps `T?` to 
 
 See the complete [Entity Framework Core with SQL Server](docs/en/entity-framework-core-sql-server.md) guide for the `Customer` example, model-wide conventions, Fluent API, expected schema, nullability, and `Rg`/`InscricaoEstadual` persistence with and without a state.
 
+## Entity Framework Core + PostgreSQL
+
+PostgreSQL/Npgsql integration is optional and distributed as a separate package:
+
+```bash
+dotnet add package Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql
+```
+
+It stores canonical `Value` representations in provider-appropriate PostgreSQL `character varying(n)` columns, preserves CLR nullability, supports strongly typed LINQ equality queries, and provides explicit context-free/state-aware mappings for `Rg` and `InscricaoEstadual`. No UF is inferred automatically.
+
+See the complete [Entity Framework Core with PostgreSQL](docs/en/entity-framework-core-postgresql.md) guide for the `Customer` example, `UseNpgsql`, model-wide conventions, Fluent API, canonical storage, nullability, expected schema, and optional-state persistence.
+
 ## What This Library Does
 
 - Keeps Brazilian identifiers as strongly typed values instead of loose strings.
@@ -133,9 +145,12 @@ Package validation:
 ```bash
 dotnet pack src/Brazilian.PrimitivesTypes/Brazilian.PrimitivesTypes.csproj --configuration Release --no-build --output artifacts/packages
 dotnet pack src/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer/Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer.csproj --configuration Release --no-build --output artifacts/packages
+dotnet pack src/Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql/Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql.csproj --configuration Release --no-build --output artifacts/packages
 dotnet pack src/Brazilian.PrimitivesTypes.Dapper.SqlServer/Brazilian.PrimitivesTypes.Dapper.SqlServer.csproj --configuration Release --no-build --output artifacts/packages
 dotnet run --file scripts/verify-package.cs -- artifacts/packages --package-id Brazilian.PrimitivesTypes
 dotnet run --file scripts/verify-package.cs -- artifacts/packages --package-id Brazilian.PrimitivesTypes.EntityFrameworkCore.SqlServer --expected-dependency Brazilian.PrimitivesTypes
+dotnet run --file scripts/verify-package.cs -- artifacts/packages --package-id Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql --expected-dependency Brazilian.PrimitivesTypes
+dotnet run --file scripts/verify-package.cs -- artifacts/packages --package-id Brazilian.PrimitivesTypes.EntityFrameworkCore.PostgreSql --expected-dependency Npgsql.EntityFrameworkCore.PostgreSQL
 dotnet run --file scripts/verify-package.cs -- artifacts/packages --package-id Brazilian.PrimitivesTypes.Dapper.SqlServer --expected-dependency Brazilian.PrimitivesTypes
 dotnet run --file scripts/verify-package.cs -- artifacts/packages --package-id Brazilian.PrimitivesTypes.Dapper.SqlServer --expected-dependency Dapper
 ```
