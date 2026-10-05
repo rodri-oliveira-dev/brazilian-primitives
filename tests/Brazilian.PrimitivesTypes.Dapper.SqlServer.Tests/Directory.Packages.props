@@ -2,7 +2,7 @@
   <Import Project="../../Directory.Packages.props" />
 
   <ItemGroup>
-    <PackageVersion Include="Microsoft.Data.SqlClient" Version="7.1.0" />
+    <PackageVersion Include="Microsoft.Data.SqlClient" Version="7.1.1" />
     <PackageVersion Include="Testcontainers.MsSql" Version="4.15.0" />
   </ItemGroup>
 </Project>
