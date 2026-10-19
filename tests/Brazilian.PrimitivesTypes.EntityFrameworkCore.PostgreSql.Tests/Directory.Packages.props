@@ -2,6 +2,6 @@
   <Import Project="../../Directory.Packages.props" />
 
   <ItemGroup>
-    <PackageVersion Include="Testcontainers.PostgreSql" Version="4.15.0" />
+    <PackageVersion Include="Testcontainers.PostgreSql" Version="4.16.0" />
   </ItemGroup>
 </Project>
