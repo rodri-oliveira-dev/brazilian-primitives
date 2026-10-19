@@ -28,6 +28,8 @@
 
     <RestoreEnablePackagePruning>true</RestoreEnablePackagePruning>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <!-- Apply centrally pinned security overrides to transitive dependencies as well. -->
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
 
     <Deterministic>true</Deterministic>
     <!-- CI builds embed deterministic source/build metadata consistently across environments. -->
