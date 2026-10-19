@@ -10,5 +10,7 @@
     <PackageVersion Include="NSubstitute" Version="6.2.0" />
     <PackageVersion Include="AwesomeAssertions" Version="9.6.0" />
     <PackageVersion Include="coverlet.MTP" Version="10.1.0" />
+    <!-- Fix GHSA-846f-f764-76mx: SqlClient 7.1.1 transitively requests vulnerable Pkcs 9.0.18. -->
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="9.0.21" />
   </ItemGroup>
 </Project>
