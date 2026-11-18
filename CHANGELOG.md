@@ -56,6 +56,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- Updated the SQL Server integration's consumer-facing dependencies to `Microsoft.Data.SqlClient` `7.1.2` (from `7.1.1`) and `Microsoft.EntityFrameworkCore.SqlServer` `10.0.15` (from `10.0.14`), increasing the minimum versions resolved by downstream consumers.
+- Updated the PostgreSQL integration's `Microsoft.EntityFrameworkCore.Relational` dependency from `10.0.14` to `10.0.15`; `Npgsql.EntityFrameworkCore.PostgreSQL` remains at `10.0.3`.
+- Raised the centrally managed `System.Security.Cryptography.Pkcs` security pin from `9.0.21` to `10.0.13` to satisfy EF Core SQL Server `10.0.15` and retain protection against `GHSA-846f-f764-76mx`. Downstream projects may resolve this newer transitive dependency.
+- Updated test/build dependencies to `Microsoft.NET.Test.Sdk` `18.12.0`, `coverlet.MTP` `10.1.1`, and SQL Server/PostgreSQL Testcontainers `4.17.0`; these changes do not add runtime dependencies to the packages.
 - CI and release packaging now build, validate, consume, and publish `Brazilian.PrimitivesTypes.Dapper.SqlServer` together with the existing packages; the local consumer validation also rejects accidental transitive Entity Framework Core dependencies.
 - Renamed the technical library identity to `Brazilian.PrimitivesTypes`, including solution, project paths, NuGet
   `PackageId`, assembly/root namespace, C# namespaces, tests, scripts, workflows, and documentation.
