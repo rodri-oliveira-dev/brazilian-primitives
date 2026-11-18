@@ -23,6 +23,11 @@ updates:
     patterns:
       - "*"
     multi-ecosystem-group: "weekly-dependencies"
+    # Major SDK upgrades require updating the CI SDK checks and testing the toolchain first.
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
 
   - package-ecosystem: "github-actions"
     directory: "/"
